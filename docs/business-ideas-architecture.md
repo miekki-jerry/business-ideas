@@ -1,0 +1,103 @@
+# Business Ideas Knowledge Base Architecture
+
+## Purpose
+
+This project stores source-backed business ideas for `bogumilluc.pl/lab/business-ideas`.
+
+It is not an AI-generated idea generator. The default behavior is retrieval first, then optional explanation. Every recommendation should point back to source evidence.
+
+## Storage
+
+- R2 is canonical storage for full JSON documents, source items, transcripts, chunks, idea markdown and import jobs.
+- D1 is a lightweight public catalog and lookup layer.
+- Cloudflare AI Search is a rebuildable retrieval index.
+
+R2 object layout:
+
+```text
+/sources/{sourceId}.json
+/source-items/{sourceItemId}.json
+/transcripts/{sourceItemId}.json
+/chunks/{sourceItemId}/{chunkId}.json
+/ideas/{ideaId}.json
+/ideas/{ideaId}.md
+/import-jobs/{jobId}.json
+```
+
+AI Search documents must stay small. Use `1 idea = 1 file` and `1 chunk = 1 file`. Do not upload full podcast archives as one document.
+
+## Public API
+
+```text
+GET  /api/business-ideas/health
+GET  /api/business-ideas/random
+GET  /api/business-ideas/ideas/:id
+GET  /api/business-ideas/ideas/slug/:slug
+POST /api/business-ideas/search
+POST /api/business-ideas/recommend
+GET  /api/business-ideas/ideas/:id/evidence
+GET  /api/business-ideas/ideas/:id/similar
+GET  /api/business-ideas/sources
+GET  /api/business-ideas/sources/:id
+POST /mcp
+```
+
+## MCP
+
+Cloudflare AI Search MCP is the V1 public endpoint once the Cloudflare index is configured.
+
+The Worker also exposes a compact JSON-RPC `/mcp` endpoint for typed tools:
+
+- `search_business_ideas`
+- `get_business_idea`
+- `recommend_business_ideas`
+- `get_random_business_ideas`
+- `get_idea_evidence`
+- `find_similar_business_ideas`
+- `list_sources`
+
+Tool responses are intentionally compact and include `hints` or `recoveryHints` when helpful. They do not return full transcripts.
+
+Example:
+
+```bash
+curl -X POST http://localhost:8787/mcp \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_business_ideas","arguments":{"query":"solo B2B AI low capital","limit":3}}}'
+```
+
+## Environment
+
+```text
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_AI_SEARCH_INSTANCE_ID=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GOOGLE_GENERATIVE_AI_API_KEY=
+DEFAULT_AI_PROVIDER=openai
+DEFAULT_AI_MODEL=gpt-5-mini
+```
+
+Worker bindings:
+
+```text
+BUSINESS_IDEAS_DB
+BUSINESS_IDEAS_BUCKET
+```
+
+Without D1/R2 bindings and AI Search env vars, the Worker uses committed sample data. This is for local development and tests only.
+
+## Copyright Rules
+
+Do not commit full copyrighted transcripts, copied article bodies, or full podcast transcript dumps.
+
+The public repo can include:
+
+- application code
+- schema and scripts
+- docs
+- tiny synthetic/sample data
+- source links and short quotes
+
+Private/generated data belongs in R2 or `.private/`, which is gitignored.

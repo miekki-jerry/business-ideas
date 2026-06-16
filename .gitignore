@@ -1,0 +1,6 @@
+.wrangler/
+.dev.vars
+.private/
+node_modules/
+dist/
+coverage/
