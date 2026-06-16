@@ -8,7 +8,8 @@ It is not an AI-generated idea generator. The default behavior is retrieval firs
 
 ## Storage
 
-- R2 is canonical storage for full JSON documents, source items, transcripts, chunks, idea markdown and import jobs.
+- R2 `business-ideas` is canonical storage for full JSON documents, source items, transcripts, chunks and import jobs.
+- R2 `business-ideas-search` stores rebuildable AI Search markdown documents only.
 - D1 is a lightweight public catalog and lookup layer.
 - Cloudflare AI Search is a rebuildable retrieval index.
 
@@ -20,11 +21,16 @@ R2 object layout:
 /transcripts/{sourceItemId}.json
 /chunks/{sourceItemId}/{chunkId}.json
 /ideas/{ideaId}.json
-/ideas/{ideaId}.md
 /import-jobs/{jobId}.json
 ```
 
-AI Search documents must stay small. Use `1 idea = 1 file` and `1 chunk = 1 file`. Do not upload full podcast archives as one document.
+AI Search object layout:
+
+```text
+/ideas/{ideaId}.md
+```
+
+AI Search documents must stay small and live in `business-ideas-search`. Use `1 idea = 1 file` and `1 chunk = 1 file`. Do not upload JSON source snapshots or full podcast archives to the search bucket.
 
 ## Public API
 

@@ -41,16 +41,23 @@ Import scripts write raw/source snapshots under `.private/`. Do not commit that 
 ## Cloudflare Setup
 
 1. D1 database `business-ideas` is configured in `wrangler.toml`.
-2. R2 bucket `business-ideas` is configured in `wrangler.toml`.
-3. AI Search instance `business-ideas` is configured through the `BUSINESS_IDEAS_SEARCH` Worker binding.
-4. Apply migrations:
+2. R2 bucket `business-ideas` is configured in `wrangler.toml` as canonical JSON/source storage.
+3. R2 bucket `business-ideas-search` stores AI Search markdown documents only.
+4. AI Search instance `business-ideas-search` is configured through the `BUSINESS_IDEAS_SEARCH` Worker binding.
+5. Apply migrations:
 
 ```bash
 wrangler d1 migrations apply business-ideas --local
 wrangler d1 migrations apply business-ideas --remote
 ```
 
-5. Deploy:
+6. Build the private catalog from imported source snapshots:
+
+```bash
+pnpm build:catalog
+```
+
+7. Deploy:
 
 ```bash
 pnpm deploy

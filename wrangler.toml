@@ -17,4 +17,4 @@ bucket_name = "business-ideas"
 
 [[ai_search]]
 binding = "BUSINESS_IDEAS_SEARCH"
-instance_name = "business-ideas"
+instance_name = "business-ideas-search"
