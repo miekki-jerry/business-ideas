@@ -91,7 +91,7 @@ class CloudflareAISearchProvider implements IdeaSearchProvider {
     const results: IdeaSearchResult[] = []
 
     for (const match of matches) {
-      const ideaId = match.filename?.match(/ideas\/(.+)\.md$/)?.[1]
+      const ideaId = getIdeaIdFromSearchMatch(match)
       if (!ideaId) {
         continue
       }
@@ -129,6 +129,10 @@ function mergeSearchResults(results: IdeaSearchResult[]) {
   }
 
   return [...byIdeaId.values()].sort((a, b) => b.score - a.score)
+}
+
+function getIdeaIdFromSearchMatch(match: { filename?: string; path?: string; item?: { key?: string } }) {
+  return (match.filename ?? match.path ?? match.item?.key)?.match(/^ideas\/(.+)\.md$/)?.[1]
 }
 
 function matchesFilters(idea: BusinessIdea, filters?: IdeaFilters) {

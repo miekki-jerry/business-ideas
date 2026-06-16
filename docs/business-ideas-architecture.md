@@ -28,12 +28,11 @@ AI Search object layout:
 
 ```text
 /ideas/{ideaId}.md
-/source-candidates/{candidateSlug}.md
 ```
 
-AI Search documents must stay small and live in `business-ideas-search`. Use `1 idea = 1 file`, `1 source candidate = 1 file`, and `1 chunk = 1 file` when chunk search is added. Do not upload JSON source snapshots or full podcast archives to the search bucket.
+AI Search documents must stay small and live in `business-ideas-search`. Use `1 idea = 1 file` and `1 chunk = 1 file` when chunk search is added. Do not upload JSON source snapshots, full podcast archives, or source-research candidates to the search bucket.
 
-`source_candidate` docs are for research and ingestion planning. They are not public `business_idea` records and should not be inserted into D1 until transcripts/content are extracted and reviewed.
+Source candidates are for research and ingestion planning. Keep them private until transcripts/content are extracted, reviewed, and promoted into public `business_idea` records.
 
 ## Public API
 

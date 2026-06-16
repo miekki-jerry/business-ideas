@@ -18,7 +18,6 @@
     "review:mfm": "tsx scripts/review-mfm-ideas.ts",
     "build:catalog": "tsx scripts/build-catalog-from-imports.ts",
     "index:ai-search": "tsx scripts/index-ai-search.ts",
-    "index:source-candidates": "tsx scripts/index-source-candidates.ts",
     "rebuild:search": "tsx scripts/rebuild-search-index.ts"
   },
   "dependencies": {

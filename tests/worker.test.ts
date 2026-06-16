@@ -24,6 +24,32 @@ describe('business ideas worker', () => {
     expect(json.results.length).toBeGreaterThan(0)
   })
 
+  it('ignores non-idea AI Search documents', async () => {
+    const response = await app.request(
+      '/api/business-ideas/search',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'unusual consultant workflow', limit: 1 }),
+      },
+      {
+        BUSINESS_IDEAS_SEARCH: {
+          search: async () => ({
+            data: [
+              { item: { key: 'source-candidates/research-note.md' }, score: 0.99 },
+              { item: { key: 'ideas/idea_my_ai_tax_guy.md' }, score: 0.98 },
+            ],
+          }),
+        },
+      },
+    )
+
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as { results: Array<{ idea: { id: string } }> }
+    expect(json.results).toHaveLength(1)
+    expect(json.results[0]?.idea.id).toBe('idea_my_ai_tax_guy')
+  })
+
   it('lists ideas', async () => {
     const response = await app.request('/api/business-ideas/ideas')
     expect(response.status).toBe(200)

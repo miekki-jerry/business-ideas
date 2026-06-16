@@ -17,6 +17,7 @@ export type AISearchBinding = {
     data?: Array<{
       filename?: string
       path?: string
+      item?: { key?: string }
       score?: number
       metadata?: Record<string, unknown>
     }>
@@ -24,6 +25,7 @@ export type AISearchBinding = {
       data?: Array<{
         filename?: string
         path?: string
+        item?: { key?: string }
         score?: number
         metadata?: Record<string, unknown>
       }>
