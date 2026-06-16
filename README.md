@@ -33,10 +33,13 @@ pnpm seed
 pnpm import:hubspot
 pnpm import:mfm
 pnpm index:ai-search
+pnpm index:source-candidates
 pnpm rebuild:search
 ```
 
 Import scripts write raw/source snapshots under `.private/`. Do not commit that directory.
+
+`pnpm index:source-candidates` writes verified source-candidate markdown docs from `.private/agent-source-research/candidates.json` into `.private/ai-search-source-candidates`. Upload those docs to `business-ideas-search/source-candidates/` and run an AI Search sync job when you want Cloudflare AI Search to know about the research queue.
 
 ## Cloudflare Setup
 
@@ -65,6 +68,6 @@ pnpm deploy
 
 ## MCP
 
-The Worker exposes `/mcp` with compact typed tools. Cloudflare AI Search MCP should also be enabled for V1 once the AI Search index is live.
+The Worker exposes `/mcp` with compact typed tools. See [docs/mcp-connection.md](docs/mcp-connection.md) for Claude Code and Codex setup commands.
 
 See [docs/business-ideas-architecture.md](docs/business-ideas-architecture.md).
