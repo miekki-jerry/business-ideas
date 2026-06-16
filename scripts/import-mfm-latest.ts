@@ -11,13 +11,22 @@ export type MfmEpisode = {
 }
 
 export function parseMfmEpisodes(html: string, limit = 10): MfmEpisode[] {
+  const jsonLdEpisodes = parseJsonLdItemList(html, limit)
+  if (jsonLdEpisodes.length > 0) {
+    return jsonLdEpisodes
+  }
+
   const links = [...html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)]
   const episodes: MfmEpisode[] = []
   const seen = new Set<string>()
 
   for (const [, href, rawTitle] of links) {
-    const title = rawTitle.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    const title = decodeHtml(rawTitle.replace(/<[^>]+>/g, ' '))
     if (!title || title.length < 12 || seen.has(title.toLowerCase())) {
+      continue
+    }
+
+    if (title === 'My First Million') {
       continue
     }
 
@@ -38,6 +47,39 @@ export function parseMfmEpisodes(html: string, limit = 10): MfmEpisode[] {
   }
 
   return episodes
+}
+
+function parseJsonLdItemList(html: string, limit: number): MfmEpisode[] {
+  const scripts = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)]
+
+  for (const [, rawJson] of scripts) {
+    const parsed = JSON.parse(rawJson) as { '@graph'?: Array<Record<string, unknown>> }
+    const itemList = parsed['@graph']?.find((item) => item['@type'] === 'ItemList') as
+      | { itemListElement?: Array<{ url?: string; name?: string }> }
+      | undefined
+
+    if (!itemList?.itemListElement) {
+      continue
+    }
+
+    return itemList.itemListElement.slice(0, limit).map((item) => ({
+      title: decodeHtml(item.name ?? ''),
+      url: item.url ?? episodesUrl,
+      transcriptStatus: 'unavailable',
+    }))
+  }
+
+  return []
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 async function main() {
