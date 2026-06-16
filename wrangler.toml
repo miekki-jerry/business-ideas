@@ -9,13 +9,12 @@ DEFAULT_AI_MODEL = "gpt-5-mini"
 [[d1_databases]]
 binding = "BUSINESS_IDEAS_DB"
 database_name = "business-ideas"
-database_id = "replace-with-cloudflare-d1-database-id"
+database_id = "c5342282-b8be-41d9-bf3d-193a7af10192"
 
 [[r2_buckets]]
 binding = "BUSINESS_IDEAS_BUCKET"
 bucket_name = "business-ideas"
 
-# AI Search V1 can be configured through REST env vars until a stable Worker binding is used:
-# CLOUDFLARE_ACCOUNT_ID
-# CLOUDFLARE_API_TOKEN
-# CLOUDFLARE_AI_SEARCH_INSTANCE_ID
+[[ai_search]]
+binding = "BUSINESS_IDEAS_SEARCH"
+instance_name = "business-ideas"

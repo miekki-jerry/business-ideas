@@ -40,21 +40,14 @@ Import scripts write raw/source snapshots under `.private/`. Do not commit that 
 
 ## Cloudflare Setup
 
-1. Create a D1 database and replace `database_id` in `wrangler.toml`.
-2. Create an R2 bucket named `business-ideas`.
-3. Apply migration:
+1. D1 database `business-ideas` is configured in `wrangler.toml`.
+2. R2 bucket `business-ideas` is configured in `wrangler.toml`.
+3. AI Search instance `business-ideas` is configured through the `BUSINESS_IDEAS_SEARCH` Worker binding.
+4. Apply migrations:
 
 ```bash
 wrangler d1 migrations apply business-ideas --local
 wrangler d1 migrations apply business-ideas --remote
-```
-
-4. Configure AI Search and set:
-
-```bash
-wrangler secret put CLOUDFLARE_ACCOUNT_ID
-wrangler secret put CLOUDFLARE_API_TOKEN
-wrangler secret put CLOUDFLARE_AI_SEARCH_INSTANCE_ID
 ```
 
 5. Deploy:

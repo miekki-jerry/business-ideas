@@ -69,9 +69,6 @@ curl -X POST http://localhost:8787/mcp \
 ## Environment
 
 ```text
-CLOUDFLARE_ACCOUNT_ID=
-CLOUDFLARE_API_TOKEN=
-CLOUDFLARE_AI_SEARCH_INSTANCE_ID=
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
@@ -84,9 +81,10 @@ Worker bindings:
 ```text
 BUSINESS_IDEAS_DB
 BUSINESS_IDEAS_BUCKET
+BUSINESS_IDEAS_SEARCH
 ```
 
-Without D1/R2 bindings and AI Search env vars, the Worker uses committed sample data. This is for local development and tests only.
+Without D1/R2 and AI Search bindings, the Worker uses committed sample data and local search. This is for local development and tests only.
 
 ## Copyright Rules
 

@@ -7,12 +7,8 @@ export interface IdeaSearchProvider {
 }
 
 export function createSearchProvider(repository: IdeasRepository, env?: Env): IdeaSearchProvider {
-  if (env?.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_AI_SEARCH_INSTANCE_ID) {
-    return new CloudflareAISearchProvider(repository, {
-      CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID,
-      CLOUDFLARE_API_TOKEN: env.CLOUDFLARE_API_TOKEN,
-      CLOUDFLARE_AI_SEARCH_INSTANCE_ID: env.CLOUDFLARE_AI_SEARCH_INSTANCE_ID,
-    })
+  if (env?.BUSINESS_IDEAS_SEARCH) {
+    return new CloudflareAISearchProvider(repository, env.BUSINESS_IDEAS_SEARCH)
   }
 
   return new LocalIdeaSearchProvider(repository)
@@ -73,33 +69,24 @@ class LocalIdeaSearchProvider implements IdeaSearchProvider {
 class CloudflareAISearchProvider implements IdeaSearchProvider {
   constructor(
     private readonly repository: IdeasRepository,
-    private readonly env: Required<Pick<Env, 'CLOUDFLARE_ACCOUNT_ID' | 'CLOUDFLARE_API_TOKEN' | 'CLOUDFLARE_AI_SEARCH_INSTANCE_ID'>>,
+    private readonly search: NonNullable<Env['BUSINESS_IDEAS_SEARCH']>,
   ) {}
 
   async searchIdeas(input: IdeaSearchInput): Promise<IdeaSearchResult[]> {
     const fallback = new LocalIdeaSearchProvider(this.repository)
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${this.env.CLOUDFLARE_ACCOUNT_ID}/ai-search/${this.env.CLOUDFLARE_AI_SEARCH_INSTANCE_ID}/search`,
-      {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${this.env.CLOUDFLARE_API_TOKEN}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: input.query,
-          limit: input.limit ?? 10,
-          filters: toAiSearchMetadataFilters(input.filters),
-        }),
-      },
-    )
+    const payload = await this.search
+      .search({
+        query: input.query,
+        max_num_results: input.limit ?? 10,
+        filters: toAiSearchMetadataFilters(input.filters),
+      })
+      .catch(() => null)
 
-    if (!response.ok) {
+    if (!payload) {
       return fallback.searchIdeas(input)
     }
 
-    const payload = (await response.json()) as { result?: { data?: Array<{ filename?: string; score?: number }> } }
-    const matches = payload.result?.data ?? []
+    const matches = payload.data ?? payload.result?.data ?? []
     const results: IdeaSearchResult[] = []
 
     for (const match of matches) {
@@ -223,8 +210,15 @@ function toAiSearchMetadataFilters(filters?: IdeaFilters) {
     return undefined
   }
 
-  return {
-    capital_required: filters.capitalRequired,
-    difficulty: filters.difficulty,
+  const metadataFilters: Record<string, string | number | boolean | Array<string | number | boolean>> = {}
+
+  if (filters.capitalRequired?.length) {
+    metadataFilters.capital_required = filters.capitalRequired
   }
+
+  if (filters.difficulty?.length) {
+    metadataFilters.difficulty = filters.difficulty
+  }
+
+  return Object.keys(metadataFilters).length > 0 ? metadataFilters : undefined
 }

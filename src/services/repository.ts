@@ -4,9 +4,30 @@ import type { BusinessIdea, IdeaEvidence, RepositoryHealth, Source, SourceItem }
 export type Env = {
   BUSINESS_IDEAS_DB?: D1Database
   BUSINESS_IDEAS_BUCKET?: R2Bucket
-  CLOUDFLARE_ACCOUNT_ID?: string
-  CLOUDFLARE_API_TOKEN?: string
-  CLOUDFLARE_AI_SEARCH_INSTANCE_ID?: string
+  BUSINESS_IDEAS_SEARCH?: AISearchBinding
+}
+
+export type AISearchBinding = {
+  search(input: {
+    query: string
+    max_num_results?: number
+    filters?: Record<string, string | number | boolean | Array<string | number | boolean>>
+  }): Promise<{
+    data?: Array<{
+      filename?: string
+      path?: string
+      score?: number
+      metadata?: Record<string, unknown>
+    }>
+    result?: {
+      data?: Array<{
+        filename?: string
+        path?: string
+        score?: number
+        metadata?: Record<string, unknown>
+      }>
+    }
+  }>
 }
 
 export interface IdeasRepository {

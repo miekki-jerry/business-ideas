@@ -9,6 +9,7 @@ import { createIdeasRepository, type Env } from '@/services/repository'
 import { createSearchProvider } from '@/services/search-provider'
 
 export const app = new Hono<{ Bindings: Env }>()
+const businessIdeasApi = new Hono<{ Bindings: Env }>()
 
 app.use(
   '*',
@@ -19,7 +20,7 @@ app.use(
   }),
 )
 
-app.get('/api/business-ideas/health', async (c) => {
+businessIdeasApi.get('/health', async (c) => {
   const repository = createIdeasRepository(c.env)
   const health = await repository.health()
   return ok(c, {
@@ -32,25 +33,25 @@ app.get('/api/business-ideas/health', async (c) => {
   })
 })
 
-app.get('/api/business-ideas/random', async (c) => {
+businessIdeasApi.get('/random', async (c) => {
   const repository = createIdeasRepository(c.env)
   const idea = await repository.getRandomIdea()
   return idea ? ok(c, { idea }) : notFound(c, 'No ideas available')
 })
 
-app.get('/api/business-ideas/ideas/:id', async (c) => {
+businessIdeasApi.get('/ideas/:id', async (c) => {
   const repository = createIdeasRepository(c.env)
   const idea = await repository.getIdeaById(c.req.param('id'))
   return idea ? ok(c, { idea }) : notFound(c, 'Idea not found')
 })
 
-app.get('/api/business-ideas/ideas/slug/:slug', async (c) => {
+businessIdeasApi.get('/ideas/slug/:slug', async (c) => {
   const repository = createIdeasRepository(c.env)
   const idea = await repository.getIdeaBySlug(c.req.param('slug'))
   return idea ? ok(c, { idea }) : notFound(c, 'Idea not found')
 })
 
-app.post('/api/business-ideas/search', async (c) => {
+businessIdeasApi.post('/search', async (c) => {
   const parsed = await parseJson(c, ideaSearchInputSchema)
   if (!parsed.ok) {
     return badRequest(c, 'Invalid search input', parsed.error)
@@ -62,7 +63,7 @@ app.post('/api/business-ideas/search', async (c) => {
   return ok(c, { results })
 })
 
-app.post('/api/business-ideas/recommend', async (c) => {
+businessIdeasApi.post('/recommend', async (c) => {
   const parsed = await parseJson(c, recommendInputSchema)
   if (!parsed.ok) {
     return badRequest(c, 'Invalid recommendation input', parsed.error)
@@ -86,27 +87,30 @@ app.post('/api/business-ideas/recommend', async (c) => {
   return ok(c, { results })
 })
 
-app.get('/api/business-ideas/ideas/:id/evidence', async (c) => {
+businessIdeasApi.get('/ideas/:id/evidence', async (c) => {
   const repository = createIdeasRepository(c.env)
   return ok(c, { evidence: await repository.getEvidence(c.req.param('id')) })
 })
 
-app.get('/api/business-ideas/ideas/:id/similar', async (c) => {
+businessIdeasApi.get('/ideas/:id/similar', async (c) => {
   const repository = createIdeasRepository(c.env)
   const searchProvider = createSearchProvider(repository, c.env)
   return ok(c, { results: await searchProvider.getSimilarIdeas({ ideaId: c.req.param('id'), limit: 5 }) })
 })
 
-app.get('/api/business-ideas/sources', async (c) => {
+businessIdeasApi.get('/sources', async (c) => {
   const repository = createIdeasRepository(c.env)
   return ok(c, { sources: await repository.listSources() })
 })
 
-app.get('/api/business-ideas/sources/:id', async (c) => {
+businessIdeasApi.get('/sources/:id', async (c) => {
   const repository = createIdeasRepository(c.env)
   const source = await repository.getSource(c.req.param('id'))
   return source ? ok(c, { source }) : notFound(c, 'Source not found')
 })
+
+app.route('/', businessIdeasApi)
+app.route('/api/business-ideas', businessIdeasApi)
 
 app.post('/mcp', async (c) => {
   const repository = createIdeasRepository(c.env)
