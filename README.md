@@ -1,6 +1,6 @@
 # Business Ideas Knowledge Base
 
-Source-backed business idea search engine for `bogumilluc.pl/lab/business-ideas`.
+Source-backed business idea search engine and MCP server.
 
 ## Stack
 
@@ -14,6 +14,8 @@ Source-backed business idea search engine for `bogumilluc.pl/lab/business-ideas`
 
 ```bash
 pnpm install
+cp .dev.vars.example .dev.vars
+cp wrangler.example.toml wrangler.toml
 pnpm test
 pnpm dev
 ```
@@ -43,24 +45,26 @@ Import scripts write raw/source snapshots under `.private/`. Do not commit that 
 
 ## Cloudflare Setup
 
-1. D1 database `business-ideas` is configured in `wrangler.toml`.
-2. R2 bucket `business-ideas` is configured in `wrangler.toml` as canonical JSON/source storage.
-3. R2 bucket `business-ideas-search` stores AI Search markdown documents only.
-4. AI Search instance `business-ideas-search` is configured through the `BUSINESS_IDEAS_SEARCH` Worker binding.
-5. Apply migrations:
+1. Copy `wrangler.example.toml` to `wrangler.toml`.
+2. Fill in your D1 `database_id` and any deployment-specific names.
+3. D1 database `business-ideas` is the default catalog database name.
+4. R2 bucket `business-ideas` is the default canonical JSON/source storage bucket.
+5. R2 bucket `business-ideas-search` stores AI Search markdown documents only.
+6. AI Search instance `business-ideas-search` is configured through the `BUSINESS_IDEAS_SEARCH` Worker binding.
+7. Apply migrations:
 
 ```bash
 wrangler d1 migrations apply business-ideas --local
 wrangler d1 migrations apply business-ideas --remote
 ```
 
-6. Build the private catalog from imported source snapshots:
+8. Build the private catalog from imported source snapshots:
 
 ```bash
 pnpm build:catalog
 ```
 
-7. Deploy:
+9. Deploy:
 
 ```bash
 pnpm deploy

@@ -14,7 +14,7 @@ const businessIdeasApi = new Hono<{ Bindings: Env }>()
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:5173', 'https://bogumilluc.pl'],
+    origin: (origin, c) => (getAllowedOrigins(c.env).includes(origin) ? origin : undefined),
     allowMethods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['content-type', 'authorization'],
   }),
@@ -128,6 +128,13 @@ app.onError((error, c) => {
   console.error(error)
   return serverError(c)
 })
+
+function getAllowedOrigins(env?: Env) {
+  return (env?.ALLOWED_ORIGINS ?? 'http://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+}
 
 async function parseJson<T extends z.ZodType>(
   c: Context,

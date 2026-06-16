@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This project stores source-backed business ideas for `bogumilluc.pl/lab/business-ideas`.
+This project stores source-backed business ideas for a public website, internal knowledge base, or MCP-accessible agent workflow.
 
 It is not an AI-generated idea generator. The default behavior is retrieval first, then optional explanation. Every recommendation should point back to source evidence.
 

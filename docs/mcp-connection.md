@@ -3,7 +3,7 @@
 Business Ideas Knowledge Base exposes a public custom MCP endpoint:
 
 ```text
-https://business-ideas.miekki-jerry.workers.dev/mcp
+https://<YOUR_WORKER_URL>/mcp
 ```
 
 No API key is required for the current public read-only tools.
@@ -13,13 +13,13 @@ No API key is required for the current public read-only tools.
 User-scoped:
 
 ```bash
-claude mcp add --scope user --transport http business-ideas https://business-ideas.miekki-jerry.workers.dev/mcp
+claude mcp add --scope user --transport http business-ideas https://<YOUR_WORKER_URL>/mcp
 ```
 
 Project-scoped:
 
 ```bash
-claude mcp add --scope project --transport http business-ideas https://business-ideas.miekki-jerry.workers.dev/mcp
+claude mcp add --scope project --transport http business-ideas https://<YOUR_WORKER_URL>/mcp
 ```
 
 Verify:
@@ -32,7 +32,7 @@ claude mcp list
 ## Codex CLI
 
 ```bash
-codex mcp add business-ideas --url https://business-ideas.miekki-jerry.workers.dev/mcp
+codex mcp add business-ideas --url https://<YOUR_WORKER_URL>/mcp
 codex mcp get business-ideas
 codex mcp list
 ```
@@ -50,7 +50,7 @@ codex mcp list
 ## Smoke Test
 
 ```bash
-curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
+curl -sS -X POST https://<YOUR_WORKER_URL>/mcp \
   -H 'content-type: application/json' \
   --data '{
     "jsonrpc": "2.0",

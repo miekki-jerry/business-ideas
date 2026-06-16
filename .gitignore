@@ -1,4 +1,5 @@
 .wrangler/
+wrangler.toml
 .dev.vars
 .private/
 node_modules/

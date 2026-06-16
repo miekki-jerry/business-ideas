@@ -1,6 +1,6 @@
 ---
 name: business-ideas-mcp
-description: Connect agents to Bogumił Łuć's Business Ideas Knowledge Base MCP and use it to search, retrieve, recommend, and cite source-backed business ideas. Use when a user asks to connect Claude Code, Codex, another MCP client, or an agent workflow to the business ideas database; when they need MCP setup commands; or when they want to query the idea database through tools instead of the website.
+description: Connect agents to a Business Ideas Knowledge Base MCP and use it to search, retrieve, recommend, and cite source-backed business ideas. Use when a user asks to connect Claude Code, Codex, another MCP client, or an agent workflow to a business ideas database; when they need MCP setup commands; or when they want to query the idea database through tools instead of a website.
 ---
 
 # Business Ideas MCP
@@ -10,7 +10,7 @@ description: Connect agents to Bogumił Łuć's Business Ideas Knowledge Base MC
 Use the custom Worker MCP endpoint by default:
 
 ```text
-https://business-ideas.miekki-jerry.workers.dev/mcp
+https://<YOUR_WORKER_URL>/mcp
 ```
 
 It is public, streamable HTTP JSON-RPC, and currently reads the production D1/R2 catalog directly. Do not default to the Cloudflare AI Search public MCP endpoint unless the user specifically asks for it; that endpoint may lag behind indexing.
@@ -33,7 +33,7 @@ Keep responses compact. Prefer idea IDs, slugs, short summaries, and evidence ti
 
 ## Source Status
 
-Current production dataset:
+Example production dataset:
 
 - 147 ideas from the HubSpot / My First Million Business Idea Database.
 - 47 reviewed ideas extracted from the 10 latest My First Million YouTube transcripts as of 2026-06-16.

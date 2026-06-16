@@ -1,4 +1,4 @@
 interface:
   display_name: "Business Ideas MCP"
-  short_description: "Connect to Bogumił business ideas MCP"
+  short_description: "Connect to a business ideas MCP"
   default_prompt: "Use $business-ideas-mcp to connect an agent to the Business Ideas Knowledge Base MCP."

@@ -5,13 +5,13 @@
 Primary custom MCP:
 
 ```text
-https://business-ideas.miekki-jerry.workers.dev/mcp
+https://<YOUR_WORKER_URL>/mcp
 ```
 
 Worker API health:
 
 ```text
-https://business-ideas.miekki-jerry.workers.dev/api/business-ideas/health
+https://<YOUR_WORKER_URL>/api/business-ideas/health
 ```
 
 Avoid using the older Cloudflare AI Search public endpoint as the default connection. It may not contain the latest D1/R2-backed catalog until Cloudflare indexing is manually checked or re-run.
@@ -21,13 +21,13 @@ Avoid using the older Cloudflare AI Search public endpoint as the default connec
 Add globally/user-scoped:
 
 ```bash
-claude mcp add --scope user --transport http business-ideas https://business-ideas.miekki-jerry.workers.dev/mcp
+claude mcp add --scope user --transport http business-ideas https://<YOUR_WORKER_URL>/mcp
 ```
 
 Add only for the current project:
 
 ```bash
-claude mcp add --scope project --transport http business-ideas https://business-ideas.miekki-jerry.workers.dev/mcp
+claude mcp add --scope project --transport http business-ideas https://<YOUR_WORKER_URL>/mcp
 ```
 
 Verify:
@@ -42,7 +42,7 @@ claude mcp list
 Add:
 
 ```bash
-codex mcp add business-ideas --url https://business-ideas.miekki-jerry.workers.dev/mcp
+codex mcp add business-ideas --url https://<YOUR_WORKER_URL>/mcp
 ```
 
 Verify:
@@ -57,13 +57,13 @@ codex mcp list
 Health:
 
 ```bash
-curl -sS https://business-ideas.miekki-jerry.workers.dev/api/business-ideas/health
+curl -sS https://<YOUR_WORKER_URL>/api/business-ideas/health
 ```
 
 Search tool:
 
 ```bash
-curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
+curl -sS -X POST https://<YOUR_WORKER_URL>/mcp \
   -H 'content-type: application/json' \
   --data '{
     "jsonrpc": "2.0",

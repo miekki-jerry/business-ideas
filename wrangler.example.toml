@@ -5,11 +5,14 @@ compatibility_date = "2026-06-16"
 [vars]
 DEFAULT_AI_PROVIDER = "openai"
 DEFAULT_AI_MODEL = "gpt-5-mini"
+# Comma-separated browser origins that may call the Worker directly.
+# Example: "http://localhost:5173,https://example.com"
+ALLOWED_ORIGINS = "http://localhost:5173"
 
 [[d1_databases]]
 binding = "BUSINESS_IDEAS_DB"
 database_name = "business-ideas"
-database_id = "c5342282-b8be-41d9-bf3d-193a7af10192"
+database_id = "<YOUR_D1_DATABASE_ID>"
 
 [[r2_buckets]]
 binding = "BUSINESS_IDEAS_BUCKET"

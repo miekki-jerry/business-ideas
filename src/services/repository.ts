@@ -5,6 +5,7 @@ export type Env = {
   BUSINESS_IDEAS_DB?: D1Database
   BUSINESS_IDEAS_BUCKET?: R2Bucket
   BUSINESS_IDEAS_SEARCH?: AISearchBinding
+  ALLOWED_ORIGINS?: string
 }
 
 export type AISearchBinding = {
