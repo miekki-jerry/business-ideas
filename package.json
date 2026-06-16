@@ -13,6 +13,9 @@
     "seed": "tsx scripts/seed-sample-data.ts",
     "import:hubspot": "tsx scripts/import-hubspot-mfm.ts",
     "import:mfm": "tsx scripts/import-mfm-latest.ts",
+    "prepare:mfm-transcripts": "tsx scripts/prepare-mfm-transcripts.ts",
+    "extract:mfm": "tsx scripts/extract-mfm-ideas.ts",
+    "review:mfm": "tsx scripts/review-mfm-ideas.ts",
     "build:catalog": "tsx scripts/build-catalog-from-imports.ts",
     "index:ai-search": "tsx scripts/index-ai-search.ts",
     "rebuild:search": "tsx scripts/rebuild-search-index.ts"

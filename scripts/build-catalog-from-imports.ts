@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { BusinessIdea, CapitalRequired, Difficulty, Source, SourceItem, TimeToRevenue } from '@/features/business-ideas/types'
 import { ideaToSearchMarkdown } from '@/lib/markdown'
@@ -25,12 +25,56 @@ type MfmImport = {
   }>
 }
 
+type PreparedTranscript = {
+  index: number
+  title: string
+  pageUrl: string
+  youtubeId?: string
+  youtubeUrl?: string
+  youtubeTitle?: string
+  sourceItemId?: string
+  transcriptStatus: 'available' | 'unavailable'
+}
+
+type MfmExtractedIdea = {
+  title: string
+  oneLiner: string
+  summary: string
+  problem?: string
+  targetCustomer?: string
+  solution?: string
+  businessModels: string[]
+  industries: string[]
+  capitalRequired: CapitalRequired
+  difficulty: Difficulty
+  timeToRevenue: TimeToRevenue
+  quote: string
+  confidence: number
+  sourceItemId?: string
+  sourceTitle: string
+  sourceUrl: string
+  chunkId?: string
+  startSec?: number
+  endSec?: number
+  urlAtTimestamp?: string
+  review?: {
+    decision: 'accept' | 'reject'
+    reason: string
+    publicQuality: number
+  }
+}
+
 const now = '2026-06-16T00:00:00.000Z'
 const outDir = '.private/r2'
 
 export function buildCatalogFromImports(inputDir = '.private/imports') {
   const hubspot = readJson<HubspotImport>(join(inputDir, 'hubspot-mfm-ideas.json'))
   const mfm = readJson<MfmImport>(join(inputDir, 'mfm-latest-episodes.json'))
+  const preparedTranscripts = readOptionalJson<PreparedTranscript[]>('.private/transcripts/mfm/prepared-transcripts.json') ?? []
+  const extractedMfmIdeas =
+    readOptionalJson<MfmExtractedIdea[]>('.private/extractions/mfm/mfm-reviewed-ideas.json') ??
+    readOptionalJson<MfmExtractedIdea[]>('.private/extractions/mfm/mfm-extracted-ideas.json') ??
+    []
 
   const sources: Source[] = [
     {
@@ -68,21 +112,30 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
       createdAt: now,
       updatedAt: now,
     },
-    ...mfm.episodes.map((episode, index) => ({
-      id: `source_item_mfm_${String(index + 1).padStart(2, '0')}_${slugify(episode.title).slice(0, 48)}`,
-      sourceId: 'source_mfm',
-      title: episode.title,
-      url: episode.url,
-      publishedAt: episode.publishedAt,
-      language: 'en',
-      transcriptStatus: episode.transcriptStatus,
-      createdAt: now,
-      updatedAt: now,
-    })),
+    ...mfm.episodes.map((episode, index) => {
+      const transcript = preparedTranscripts.find((item) => item.index === index + 1 || item.pageUrl === episode.url)
+
+      return {
+        id: transcript?.sourceItemId ?? `source_item_mfm_${String(index + 1).padStart(2, '0')}_${slugify(episode.title).slice(0, 48)}`,
+        sourceId: 'source_mfm',
+        title: transcript?.youtubeTitle ?? episode.title,
+        url: transcript?.youtubeUrl ?? episode.url,
+        externalId: transcript?.youtubeId,
+        publishedAt: episode.publishedAt,
+        language: 'en',
+        transcriptStatus: transcript?.transcriptStatus ?? episode.transcriptStatus,
+        createdAt: now,
+        updatedAt: now,
+      }
+    }),
   ]
 
   const seenSlugs = new Map<string, number>()
   const ideas = hubspot.ideas.map((row) => toBusinessIdea(row, seenSlugs))
+  for (const row of extractedMfmIdeas.filter(isUsableMfmIdea)) {
+    addMfmIdea(ideas, row, seenSlugs)
+  }
+
   writeCatalogFiles({ sources, sourceItems, ideas })
   writeSeedSql({ sources, sourceItems, ideas })
 
@@ -90,6 +143,79 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
     sources: sources.length,
     sourceItems: sourceItems.length,
     ideas: ideas.length,
+  }
+}
+
+function addMfmIdea(ideas: BusinessIdea[], row: MfmExtractedIdea, seenSlugs: Map<string, number>) {
+  const existing = ideas.find((idea) => normalizeKey(idea.title) === normalizeKey(row.title))
+
+  if (existing) {
+    existing.evidence.push(toMfmEvidence(row, existing.id, existing.slug, existing.evidence.length + 1))
+    existing.sourceConfidence = Math.max(existing.sourceConfidence, row.confidence)
+    return
+  }
+
+  ideas.push(toMfmBusinessIdea(row, seenSlugs))
+}
+
+function toMfmBusinessIdea(row: MfmExtractedIdea, seenSlugs: Map<string, number>): BusinessIdea {
+  const baseSlug = slugify(row.title)
+  const seenCount = seenSlugs.get(baseSlug) ?? 0
+  seenSlugs.set(baseSlug, seenCount + 1)
+  const slug = seenCount === 0 ? baseSlug : `${baseSlug}-${seenCount + 1}`
+  const id = `idea_${slug}`
+  const businessModels = normalizeExtractedList(row.businessModels, ['service'])
+  const industries = normalizeExtractedList(row.industries, ['business'])
+  const text = `${row.title} ${row.oneLiner} ${row.summary} ${row.problem ?? ''} ${row.solution ?? ''}`.toLowerCase()
+
+  return {
+    id,
+    slug,
+    title: normalizeText(row.title),
+    oneLiner: normalizeText(row.oneLiner),
+    summary: normalizeText(row.summary),
+    problem: normalizeText(row.problem),
+    targetCustomer: normalizeText(row.targetCustomer),
+    solution: normalizeText(row.solution),
+    businessModels,
+    industries,
+    skillsRequired: skillsForMfmIdea(text),
+    distributionChannels: distributionForMfmIdea(text),
+    capitalRequired: row.capitalRequired,
+    difficulty: row.difficulty,
+    timeToRevenue: row.timeToRevenue,
+    soloFounderFit: text.includes('marketplace') || row.capitalRequired === 'high' ? 5 : 8,
+    aiLeverage: /\bai\b|agent|llm|automation/.test(text) ? 9 : 5,
+    b2bFit: /b2b|business|company|founder|operator|enterprise|sales|revenue/.test(text) ? 8 : 4,
+    boringBusinessScore: /service|operations|workflow|back office|local/.test(text) ? 8 : 5,
+    competitionLevel: 'medium',
+    geography: 'Validate in the audience and market referenced by the source episode.',
+    monetization: `Start with ${businessModels[0]} pricing and validate willingness to pay from the source-backed customer segment.`,
+    sourceConfidence: row.confidence,
+    createdAt: now,
+    updatedAt: now,
+    evidence: [toMfmEvidence(row, id, slug, 1)],
+  }
+}
+
+function toMfmEvidence(row: MfmExtractedIdea, ideaId: string, slug: string, index: number) {
+  const suffix = String(index).padStart(3, '0')
+
+  return {
+    id: `evidence_${slug}_mfm_${suffix}`,
+    ideaId,
+    sourceId: 'source_mfm',
+    sourceItemId: row.sourceItemId,
+    chunkId: row.chunkId,
+    sourceTitle: row.sourceTitle,
+    sourceType: 'podcast' as const,
+    sourceUrl: row.sourceUrl,
+    startSec: row.startSec,
+    endSec: row.endSec,
+    urlAtTimestamp: row.urlAtTimestamp ?? row.sourceUrl,
+    quote: shortQuote(normalizeText(row.quote), 18),
+    reason: `Extracted from a source-backed My First Million transcript chunk with confidence ${Math.round(row.confidence * 100)}%.`,
+    relevanceScore: row.confidence,
   }
 }
 
@@ -202,6 +328,46 @@ function writeSeedSql(catalog: { sources: Source[]; sourceItems: SourceItem[]; i
 
 function readJson<T>(path: string) {
   return JSON.parse(readFileSync(path, 'utf8')) as T
+}
+
+function readOptionalJson<T>(path: string) {
+  return existsSync(path) ? readJson<T>(path) : undefined
+}
+
+function isUsableMfmIdea(row: MfmExtractedIdea) {
+  return (
+    row.confidence >= 0.7 &&
+    Boolean(normalizeText(row.title)) &&
+    Boolean(normalizeText(row.oneLiner)) &&
+    Boolean(normalizeText(row.summary)) &&
+    Boolean(normalizeText(row.quote)) &&
+    Boolean(row.sourceItemId) &&
+    Boolean(row.chunkId) &&
+    (!row.review || (row.review.decision === 'accept' && row.review.publicQuality >= 0.75))
+  )
+}
+
+function normalizeExtractedList(values: string[], fallback: string[]) {
+  const normalized = values.map(normalizeText).filter(Boolean).map(normalizeLabel)
+  return normalized.length > 0 ? [...new Set(normalized)] : fallback
+}
+
+function normalizeKey(value: string) {
+  return slugify(value).replace(/^ai-/, '')
+}
+
+function skillsForMfmIdea(text: string) {
+  const skills = ['customer discovery', 'distribution', 'product validation']
+  if (/\bai\b|agent|llm|automation/.test(text)) skills.unshift('LLM workflows')
+  if (/marketplace/.test(text)) skills.push('supply acquisition')
+  if (/content|newsletter|creator/.test(text)) skills.push('audience building')
+  return [...new Set(skills)]
+}
+
+function distributionForMfmIdea(text: string) {
+  if (/local|real estate|home|service/.test(text)) return ['local SEO', 'cold outreach', 'referrals']
+  if (/creator|content|newsletter|media/.test(text)) return ['X', 'newsletter', 'creator partnerships']
+  return ['SEO', 'cold outreach', 'partnerships']
 }
 
 function slugify(value: string) {

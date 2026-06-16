@@ -74,6 +74,7 @@ class CloudflareAISearchProvider implements IdeaSearchProvider {
 
   async searchIdeas(input: IdeaSearchInput): Promise<IdeaSearchResult[]> {
     const fallback = new LocalIdeaSearchProvider(this.repository)
+    const fallbackResults = await fallback.searchIdeas(input)
     const payload = await this.search
       .search({
         query: input.query,
@@ -83,7 +84,7 @@ class CloudflareAISearchProvider implements IdeaSearchProvider {
       .catch(() => null)
 
     if (!payload) {
-      return fallback.searchIdeas(input)
+      return fallbackResults
     }
 
     const matches = payload.data ?? payload.result?.data ?? []
@@ -108,13 +109,26 @@ class CloudflareAISearchProvider implements IdeaSearchProvider {
       })
     }
 
-    return results.length > 0 ? results : fallback.searchIdeas(input)
+    return mergeSearchResults([...results, ...fallbackResults]).slice(0, input.limit ?? 10)
   }
 
   async getSimilarIdeas(input: { ideaId: string; limit?: number }) {
     const fallback = new LocalIdeaSearchProvider(this.repository)
     return fallback.getSimilarIdeas(input)
   }
+}
+
+function mergeSearchResults(results: IdeaSearchResult[]) {
+  const byIdeaId = new Map<string, IdeaSearchResult>()
+
+  for (const result of results) {
+    const existing = byIdeaId.get(result.idea.id)
+    if (!existing || result.score > existing.score) {
+      byIdeaId.set(result.idea.id, result)
+    }
+  }
+
+  return [...byIdeaId.values()].sort((a, b) => b.score - a.score)
 }
 
 function matchesFilters(idea: BusinessIdea, filters?: IdeaFilters) {
