@@ -39,6 +39,11 @@ businessIdeasApi.get('/random', async (c) => {
   return idea ? ok(c, { idea }) : notFound(c, 'No ideas available')
 })
 
+businessIdeasApi.get('/ideas', async (c) => {
+  const repository = createIdeasRepository(c.env)
+  return ok(c, { ideas: await repository.listIdeas() })
+})
+
 businessIdeasApi.get('/ideas/:id', async (c) => {
   const repository = createIdeasRepository(c.env)
   const idea = await repository.getIdeaById(c.req.param('id'))

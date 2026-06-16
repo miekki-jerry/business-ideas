@@ -24,6 +24,13 @@ describe('business ideas worker', () => {
     expect(json.results.length).toBeGreaterThan(0)
   })
 
+  it('lists ideas', async () => {
+    const response = await app.request('/api/business-ideas/ideas')
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as { ideas: unknown[] }
+    expect(json.ideas.length).toBeGreaterThan(0)
+  })
+
   it('serves idea by slug', async () => {
     const response = await app.request('/api/business-ideas/ideas/slug/my-ai-tax-guy')
     expect(response.status).toBe(200)
