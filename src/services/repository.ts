@@ -68,6 +68,8 @@ class SampleIdeasRepository implements IdeasRepository {
 }
 
 class D1R2IdeasRepository implements IdeasRepository {
+  private readonly fallback = new SampleIdeasRepository()
+
   constructor(
     private readonly db: D1Database,
     private readonly bucket: R2Bucket,
@@ -75,7 +77,13 @@ class D1R2IdeasRepository implements IdeasRepository {
 
   async health(): Promise<RepositoryHealth> {
     const row = await this.db.prepare('select count(*) as count from business_ideas').first<{ count: number }>()
-    return { storage: 'd1-r2', ideaCount: row?.count ?? 0 }
+    const count = row?.count ?? 0
+
+    if (count === 0) {
+      return this.fallback.health()
+    }
+
+    return { storage: 'd1-r2', ideaCount: count }
   }
 
   async listIdeas() {
@@ -84,7 +92,8 @@ class D1R2IdeasRepository implements IdeasRepository {
       .all<{ id: string; r2_json_key: string }>()
 
     const ideas = await Promise.all(rows.results.map((row) => this.getIdeaFromR2(row.r2_json_key)))
-    return ideas.filter((idea): idea is BusinessIdea => Boolean(idea))
+    const found = ideas.filter((idea): idea is BusinessIdea => Boolean(idea))
+    return found.length > 0 ? found : this.fallback.listIdeas()
   }
 
   async getRandomIdea() {
@@ -92,7 +101,7 @@ class D1R2IdeasRepository implements IdeasRepository {
       .prepare('select r2_json_key from business_ideas order by random() limit 1')
       .first<{ r2_json_key: string }>()
 
-    return row ? this.getIdeaFromR2(row.r2_json_key) : null
+    return row ? this.getIdeaFromR2(row.r2_json_key) : this.fallback.getRandomIdea()
   }
 
   async getIdeaById(id: string) {
@@ -101,7 +110,7 @@ class D1R2IdeasRepository implements IdeasRepository {
       .bind(id)
       .first<{ r2_json_key: string }>()
 
-    return row ? this.getIdeaFromR2(row.r2_json_key) : null
+    return row ? this.getIdeaFromR2(row.r2_json_key) : this.fallback.getIdeaById(id)
   }
 
   async getIdeaBySlug(slug: string) {
@@ -110,7 +119,7 @@ class D1R2IdeasRepository implements IdeasRepository {
       .bind(slug)
       .first<{ r2_json_key: string }>()
 
-    return row ? this.getIdeaFromR2(row.r2_json_key) : null
+    return row ? this.getIdeaFromR2(row.r2_json_key) : this.fallback.getIdeaBySlug(slug)
   }
 
   async getEvidence(ideaId: string) {
@@ -123,22 +132,25 @@ class D1R2IdeasRepository implements IdeasRepository {
       .bind(ideaId)
       .all<Record<string, unknown>>()
 
-    return rows.results.map(mapEvidenceRow)
+    const evidence = rows.results.map(mapEvidenceRow)
+    return evidence.length > 0 ? evidence : this.fallback.getEvidence(ideaId)
   }
 
   async listSources() {
     const rows = await this.db.prepare('select * from sources order by name asc').all<Record<string, unknown>>()
-    return rows.results.map(mapSourceRow)
+    const sources = rows.results.map(mapSourceRow)
+    return sources.length > 0 ? sources : this.fallback.listSources()
   }
 
   async getSource(id: string) {
     const row = await this.db.prepare('select * from sources where id = ?').bind(id).first<Record<string, unknown>>()
-    return row ? mapSourceRow(row) : null
+    return row ? mapSourceRow(row) : this.fallback.getSource(id)
   }
 
   async listSourceItems() {
     const rows = await this.db.prepare('select * from source_items order by published_at desc').all<Record<string, unknown>>()
-    return rows.results.map(mapSourceItemRow)
+    const sourceItems = rows.results.map(mapSourceItemRow)
+    return sourceItems.length > 0 ? sourceItems : this.fallback.listSourceItems()
   }
 
   private async getIdeaFromR2(key: string) {
