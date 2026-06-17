@@ -13,6 +13,13 @@ type JsonRpcRequest = {
   }
 }
 
+const protocolVersion = '2025-06-18'
+
+const serverInfo = {
+  name: 'business-ideas',
+  version: '0.1.0',
+}
+
 const tools = [
   {
     name: 'search_business_ideas',
@@ -102,6 +109,26 @@ export async function handleMcpRequest(
     return jsonRpcError(c, null, -32700, 'Invalid JSON', ['Send a JSON-RPC 2.0 request body.'])
   }
 
+  if (request.method === 'initialize') {
+    return c.json({
+      jsonrpc: '2.0',
+      id: request.id ?? null,
+      result: {
+        protocolVersion,
+        capabilities: {
+          tools: {
+            listChanged: false,
+          },
+        },
+        serverInfo,
+      },
+    })
+  }
+
+  if (request.method === 'notifications/initialized') {
+    return c.body(null, 202)
+  }
+
   if (request.method === 'tools/list') {
     return c.json({
       jsonrpc: '2.0',
@@ -111,7 +138,9 @@ export async function handleMcpRequest(
   }
 
   if (request.method !== 'tools/call') {
-    return jsonRpcError(c, request.id ?? null, -32601, 'Method not found', ['Use tools/list or tools/call.'])
+    return jsonRpcError(c, request.id ?? null, -32601, 'Method not found', [
+      'Use initialize, tools/list, or tools/call.',
+    ])
   }
 
   const toolName = request.params?.name

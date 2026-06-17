@@ -119,11 +119,43 @@ describe('business ideas worker', () => {
     await expect(response.json()).resolves.toMatchObject({ idea: { title: 'My AI Tax Guy' } })
   })
 
-  it('lists and calls MCP tools', async () => {
+  it('initializes, lists, and calls MCP tools', async () => {
+    const initializeResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-06-18',
+          capabilities: {},
+          clientInfo: { name: 'worker-test', version: '0.0.0' },
+        },
+      }),
+    })
+    expect(initializeResponse.status).toBe(200)
+    await expect(initializeResponse.json()).resolves.toMatchObject({
+      jsonrpc: '2.0',
+      id: 1,
+      result: {
+        protocolVersion: '2025-06-18',
+        capabilities: { tools: { listChanged: false } },
+        serverInfo: { name: 'business-ideas' },
+      },
+    })
+
+    const initializedResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+    })
+    expect(initializedResponse.status).toBe(202)
+
     const listResponse = await app.request('/mcp', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }),
     })
     expect(listResponse.status).toBe(200)
 
@@ -132,7 +164,7 @@ describe('business ideas worker', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         jsonrpc: '2.0',
-        id: 2,
+        id: 3,
         method: 'tools/call',
         params: { name: 'search_business_ideas', arguments: { query: 'tax AI', limit: 1 } },
       }),
