@@ -222,7 +222,10 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
   ]
 
   const seenSlugs = new Map<string, number>()
-  const ideas = hubspot.ideas.map((row) => toBusinessIdea(row, seenSlugs))
+  const ideas: BusinessIdea[] = []
+  for (const row of hubspot.ideas) {
+    addHubspotIdea(ideas, row, seenSlugs)
+  }
   for (const row of extractedMfmIdeas.filter(isUsableMfmIdea)) {
     addMfmIdea(ideas, row, seenSlugs)
   }
@@ -261,6 +264,16 @@ function addCuratedIdea(
   ideas.push(toCuratedBusinessIdea(row, seenSlugs))
 }
 
+function addHubspotIdea(ideas: BusinessIdea[], row: HubspotImport['ideas'][number], seenSlugs: Map<string, number>) {
+  const existing = ideas.find((idea) => normalizeKey(idea.title) === normalizeKey(row.title))
+
+  if (existing) {
+    return
+  }
+
+  ideas.push(toBusinessIdea(row, seenSlugs))
+}
+
 function addMfmIdea(ideas: BusinessIdea[], row: MfmExtractedIdea, seenSlugs: Map<string, number>) {
   const existing = ideas.find((idea) => normalizeKey(idea.title) === normalizeKey(row.title))
 
@@ -275,14 +288,18 @@ function addMfmIdea(ideas: BusinessIdea[], row: MfmExtractedIdea, seenSlugs: Map
 
 function preserveExistingIdeas(ideas: BusinessIdea[], preservedIdeas: BusinessIdea[], seenSlugs: Map<string, number>) {
   const existingSlugs = new Set(ideas.map((idea) => idea.slug))
+  const existingTitles = new Set(ideas.map((idea) => normalizeKey(idea.title)))
 
   for (const idea of preservedIdeas) {
-    if (existingSlugs.has(idea.slug)) {
+    const titleKey = normalizeKey(idea.title)
+
+    if (existingSlugs.has(idea.slug) || existingTitles.has(titleKey)) {
       continue
     }
 
     ideas.push(idea)
     existingSlugs.add(idea.slug)
+    existingTitles.add(titleKey)
     seenSlugs.set(idea.slug, Math.max(seenSlugs.get(idea.slug) ?? 0, 1))
   }
 }
