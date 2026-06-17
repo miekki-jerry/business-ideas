@@ -174,4 +174,60 @@ describe('business ideas worker', () => {
     const json = (await callResponse.json()) as { result: { structuredContent: { results: unknown[] } } }
     expect(json.result.structuredContent.results).toHaveLength(1)
   })
+
+  it('counts, lists, and facets ideas through MCP', async () => {
+    const countResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'count_business_ideas',
+          arguments: { capitalRequired: ['low'], minAiLeverage: 7 },
+        },
+      }),
+    })
+    expect(countResponse.status).toBe(200)
+    const countJson = (await countResponse.json()) as { result: { structuredContent: { matchedCount: number } } }
+    expect(countJson.result.structuredContent.matchedCount).toBe(1)
+
+    const listResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: {
+          name: 'list_business_ideas',
+          arguments: { industries: ['home services'], limit: 1 },
+        },
+      }),
+    })
+    expect(listResponse.status).toBe(200)
+    const listJson = (await listResponse.json()) as {
+      result: { structuredContent: { matchedCount: number; hasMore: boolean; ideas: Array<{ id: string }> } }
+    }
+    expect(listJson.result.structuredContent.matchedCount).toBe(2)
+    expect(listJson.result.structuredContent.hasMore).toBe(true)
+    expect(listJson.result.structuredContent.ideas).toHaveLength(1)
+
+    const facetsResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: { name: 'get_business_idea_facets', arguments: {} },
+      }),
+    })
+    expect(facetsResponse.status).toBe(200)
+    const facetsJson = (await facetsResponse.json()) as {
+      result: { structuredContent: { facets: { industries: Array<{ value: string; count: number }> } } }
+    }
+    expect(facetsJson.result.structuredContent.facets.industries).toContainEqual({ value: 'home services', count: 2 })
+  })
 })
