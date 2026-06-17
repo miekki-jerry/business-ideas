@@ -230,4 +230,70 @@ describe('business ideas worker', () => {
     }
     expect(facetsJson.result.structuredContent.facets.industries).toContainEqual({ value: 'home services', count: 2 })
   })
+
+  it('serves MCP resources and prompts', async () => {
+    const resourcesListResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'resources/list' }),
+    })
+    expect(resourcesListResponse.status).toBe(200)
+    const resourcesListJson = (await resourcesListResponse.json()) as {
+      result: { resources: Array<{ uri: string }> }
+    }
+    expect(resourcesListJson.result.resources).toContainEqual(
+      expect.objectContaining({ uri: 'business-ideas://overview' }),
+    )
+
+    const resourceReadResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'resources/read',
+        params: { uri: 'business-ideas://idea/my-ai-tax-guy' },
+      }),
+    })
+    expect(resourceReadResponse.status).toBe(200)
+    const resourceReadJson = (await resourceReadResponse.json()) as {
+      result: { contents: Array<{ text: string }> }
+    }
+    expect(JSON.parse(resourceReadJson.result.contents[0]?.text ?? '{}')).toMatchObject({
+      found: true,
+      idea: { id: 'idea_my_ai_tax_guy' },
+    })
+
+    const promptsListResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'prompts/list' }),
+    })
+    expect(promptsListResponse.status).toBe(200)
+    const promptsListJson = (await promptsListResponse.json()) as {
+      result: { prompts: Array<{ name: string }> }
+    }
+    expect(promptsListJson.result.prompts).toContainEqual(
+      expect.objectContaining({ name: 'validation_brief' }),
+    )
+
+    const promptGetResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'prompts/get',
+        params: {
+          name: 'validation_brief',
+          arguments: { idOrSlug: 'my-ai-tax-guy' },
+        },
+      }),
+    })
+    expect(promptGetResponse.status).toBe(200)
+    const promptGetJson = (await promptGetResponse.json()) as {
+      result: { messages: Array<{ content: { text: string } }> }
+    }
+    expect(promptGetJson.result.messages[0]?.content.text).toContain('my-ai-tax-guy')
+  })
 })

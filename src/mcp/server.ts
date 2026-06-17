@@ -10,6 +10,7 @@ type JsonRpcRequest = {
   method?: string
   params?: {
     name?: string
+    uri?: string
     arguments?: Record<string, unknown>
   }
 }
@@ -21,19 +22,45 @@ const serverInfo = {
   version: '0.1.0',
 }
 
-const filterProperties = {
-  query: {
-    type: 'string',
-    description: 'Optional text query across title, summary, customer, solution, source text, industries, and models.',
+const ideaFilterProperties = {
+  industries: {
+    type: 'array',
+    items: { type: 'string' },
+    description: 'Industry labels, matched fuzzily against database values.',
   },
-  industries: { type: 'array', items: { type: 'string' } },
-  businessModels: { type: 'array', items: { type: 'string' } },
+  businessModels: {
+    type: 'array',
+    items: { type: 'string' },
+    description: 'Business model labels, matched fuzzily against database values.',
+  },
   capitalRequired: { type: 'array', items: { type: 'string', enum: ['none', 'low', 'medium', 'high'] } },
   difficulty: { type: 'array', items: { type: 'string', enum: ['low', 'medium', 'high'] } },
   timeToRevenue: { type: 'array', items: { type: 'string', enum: ['days', 'weeks', 'months', 'years'] } },
   minSoloFounderFit: { type: 'number', minimum: 0, maximum: 10 },
   minAiLeverage: { type: 'number', minimum: 0, maximum: 10 },
   minB2bFit: { type: 'number', minimum: 0, maximum: 10 },
+}
+
+const filterProperties = {
+  query: {
+    type: 'string',
+    description: 'Optional text query across title, summary, customer, solution, source text, industries, and models.',
+  },
+  ...ideaFilterProperties,
+}
+
+const profileProperties = {
+  query: { type: 'string' },
+  whoAreYou: { type: 'string', description: 'Short profile, e.g. solo founder, agency owner, mobile dev.' },
+  skills: { type: 'array', items: { type: 'string' } },
+  preferredIndustries: { type: 'array', items: { type: 'string' } },
+  dislikedIndustries: { type: 'array', items: { type: 'string' } },
+  businessPreference: { type: 'string', enum: ['b2b', 'b2c', 'both'] },
+  capitalAvailable: { type: 'string', enum: ['none', 'low', 'medium', 'high'] },
+  wantsSoloFounder: { type: 'boolean' },
+  wantsAiLeverage: { type: 'boolean' },
+  preferredTimeToRevenue: { type: 'string', enum: ['days', 'weeks', 'months', 'years'] },
+  notes: { type: 'string' },
 }
 
 const tools = [
@@ -43,8 +70,17 @@ const tools = [
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string' },
-        filters: { type: 'object' },
+        query: { type: 'string', description: 'Natural-language search query. English and Polish terms are accepted.' },
+        filters: {
+          type: 'object',
+          properties: ideaFilterProperties,
+          description: 'Optional structured filters. Use these for hard constraints after the text query.',
+        },
+        profile: {
+          type: 'object',
+          properties: profileProperties,
+          description: 'Optional user profile for fit scoring.',
+        },
         limit: { type: 'number', minimum: 1, maximum: 10 },
       },
       required: ['query'],
@@ -87,7 +123,12 @@ const tools = [
     inputSchema: {
       type: 'object',
       properties: {
-        profile: { type: 'object' },
+        profile: {
+          type: 'object',
+          properties: profileProperties,
+          description: 'Profile of the builder, team, capital constraints, skills, and business preferences.',
+          required: ['whoAreYou'],
+        },
         limit: { type: 'number', minimum: 1, maximum: 10 },
       },
       required: ['profile'],
@@ -142,6 +183,42 @@ const tools = [
   },
 ]
 
+const prompts = [
+  {
+    name: 'recommend_for_builder_profile',
+    description: 'Recommend source-backed ideas for a builder profile and constraints.',
+    arguments: [
+      {
+        name: 'profile',
+        description: 'Builder profile, skills, constraints, and preferences.',
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'compare_business_ideas',
+    description: 'Compare a small set of idea IDs by wedge, MVP, distribution, risks, and fit.',
+    arguments: [
+      {
+        name: 'ideaIds',
+        description: 'Comma-separated idea IDs or slugs to compare.',
+        required: true,
+      },
+    ],
+  },
+  {
+    name: 'validation_brief',
+    description: 'Create a practical validation plan for one source-backed idea.',
+    arguments: [
+      {
+        name: 'idOrSlug',
+        description: 'Idea ID or slug.',
+        required: true,
+      },
+    ],
+  },
+]
+
 export async function handleMcpRequest(
   c: Context,
   repository: IdeasRepository,
@@ -163,6 +240,13 @@ export async function handleMcpRequest(
           tools: {
             listChanged: false,
           },
+          resources: {
+            subscribe: false,
+            listChanged: false,
+          },
+          prompts: {
+            listChanged: false,
+          },
         },
         serverInfo,
       },
@@ -181,9 +265,55 @@ export async function handleMcpRequest(
     })
   }
 
+  if (request.method === 'resources/list') {
+    return c.json({
+      jsonrpc: '2.0',
+      id: request.id ?? null,
+      result: { resources: listResources() },
+    })
+  }
+
+  if (request.method === 'resources/read') {
+    try {
+      const result = await readResource(request.params?.uri, repository)
+      return c.json({
+        jsonrpc: '2.0',
+        id: request.id ?? null,
+        result,
+      })
+    } catch (error) {
+      return jsonRpcError(c, request.id ?? null, -32602, error instanceof Error ? error.message : 'Invalid resource', [
+        'Call resources/list to inspect available resource URIs.',
+      ])
+    }
+  }
+
+  if (request.method === 'prompts/list') {
+    return c.json({
+      jsonrpc: '2.0',
+      id: request.id ?? null,
+      result: { prompts },
+    })
+  }
+
+  if (request.method === 'prompts/get') {
+    try {
+      const result = getPrompt(request.params?.name, request.params?.arguments ?? {})
+      return c.json({
+        jsonrpc: '2.0',
+        id: request.id ?? null,
+        result,
+      })
+    } catch (error) {
+      return jsonRpcError(c, request.id ?? null, -32602, error instanceof Error ? error.message : 'Invalid prompt', [
+        'Call prompts/list to inspect available prompt names and arguments.',
+      ])
+    }
+  }
+
   if (request.method !== 'tools/call') {
     return jsonRpcError(c, request.id ?? null, -32601, 'Method not found', [
-      'Use initialize, tools/list, or tools/call.',
+      'Use initialize, tools/list, tools/call, resources/list, resources/read, prompts/list, or prompts/get.',
     ])
   }
 
@@ -294,18 +424,7 @@ async function callTool(
 
       return {
         totalDatabaseSize: ideas.length,
-        facets: {
-          industries: countFacet(ideas.flatMap((idea) => idea.industries)),
-          businessModels: countFacet(ideas.flatMap((idea) => idea.businessModels)),
-          skills: countFacet(ideas.flatMap((idea) => idea.skillsRequired)),
-          sources: countFacet(ideas.map((idea) => sourceLabel(idea))),
-          capitalRequired: countFacet(ideas.map((idea) => idea.capitalRequired)),
-          difficulty: countFacet(ideas.map((idea) => idea.difficulty)),
-          timeToRevenue: countFacet(ideas.map((idea) => idea.timeToRevenue)),
-          soloFounderFit: countFacet(ideas.map((idea) => String(idea.soloFounderFit))),
-          aiLeverage: countFacet(ideas.map((idea) => String(idea.aiLeverage))),
-          b2bFit: countFacet(ideas.map((idea) => String(idea.b2bFit))),
-        },
+        facets: buildFacets(ideas),
       }
     }
     case 'find_similar_business_ideas': {
@@ -360,6 +479,174 @@ function compactIdea(idea: Awaited<ReturnType<IdeasRepository['getRandomIdea']>>
   }
 }
 
+function listResources() {
+  return [
+    {
+      uri: 'business-ideas://overview',
+      name: 'Business Ideas database overview',
+      description: 'Current public dataset size, source policy, tool guidance, and safety constraints.',
+      mimeType: 'text/markdown',
+    },
+    {
+      uri: 'business-ideas://facets',
+      name: 'Business Ideas facets',
+      description: 'Facet counts for industries, models, skills, sources, scores, difficulty, capital, and time to revenue.',
+      mimeType: 'application/json',
+    },
+    {
+      uri: 'business-ideas://idea/{id-or-slug}',
+      name: 'Business idea by ID or slug',
+      description: 'Template URI. Replace {id-or-slug} with an idea id or slug to read compact idea context.',
+      mimeType: 'application/json',
+    },
+  ]
+}
+
+async function readResource(uri: string | undefined, repository: IdeasRepository) {
+  if (!uri) {
+    throw new Error('Resource uri is required')
+  }
+
+  if (uri === 'business-ideas://overview') {
+    const health = await repository.health()
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'text/markdown',
+          text: [
+            '# Business Ideas Knowledge Base',
+            '',
+            `Public ideas: ${health.ideaCount}`,
+            `Storage: ${health.storage}`,
+            '',
+            'Use this MCP for source-backed idea discovery, comparison, recommendation, and validation planning.',
+            'Prefer search/list/count/facets before making recommendations. Use get_business_idea for detailed work.',
+            'The public MCP intentionally returns compact evidence, short quotes, and timestamp/source URLs. It does not expose full transcripts.',
+          ].join('\n'),
+        },
+      ],
+    }
+  }
+
+  if (uri === 'business-ideas://facets') {
+    const ideas = await repository.listIdeas()
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'application/json',
+          text: JSON.stringify({
+            totalDatabaseSize: ideas.length,
+            facets: buildFacets(ideas),
+          }),
+        },
+      ],
+    }
+  }
+
+  const idOrSlug = uri.match(/^business-ideas:\/\/idea\/(.+)$/)?.[1]
+
+  if (idOrSlug) {
+    const idea = (await repository.getIdeaById(idOrSlug)) ?? (await repository.getIdeaBySlug(idOrSlug))
+
+    if (!idea) {
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              found: false,
+              recoveryHints: ['Use search_business_ideas or list_business_ideas to find a valid id or slug.'],
+            }),
+          },
+        ],
+      }
+    }
+
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'application/json',
+          text: JSON.stringify({
+            found: true,
+            idea: compactIdea(idea),
+            evidence: idea.evidence.slice(0, 3),
+          }),
+        },
+      ],
+    }
+  }
+
+  throw new Error(`Unknown resource: ${uri}`)
+}
+
+function getPrompt(name: string | undefined, args: Record<string, unknown>) {
+  switch (name) {
+    case 'recommend_for_builder_profile': {
+      const profile = typeof args.profile === 'string' ? args.profile : JSON.stringify(args.profile ?? {})
+      return {
+        description: 'Recommend source-backed business ideas for a builder profile.',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: [
+                'Use the Business Ideas MCP to recommend 5 source-backed ideas for this builder profile.',
+                'First call recommend_business_ideas or search_business_ideas, then use get_business_idea for the strongest candidates.',
+                'For each recommendation include: why it fits, smallest MVP, first customers, monetization, main risk, and source URL.',
+                '',
+                `Profile: ${profile}`,
+              ].join('\n'),
+            },
+          },
+        ],
+      }
+    }
+    case 'compare_business_ideas': {
+      return {
+        description: 'Compare source-backed business ideas.',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: [
+                `Compare these business ideas: ${String(args.ideaIds ?? '')}.`,
+                'Use get_business_idea for each ID or slug. Compare wedge, MVP, first customers, distribution, monetization, risks, solo-founder fit, AI leverage, and source confidence.',
+                'End with a practical recommendation and cite idea IDs plus source URLs.',
+              ].join('\n'),
+            },
+          },
+        ],
+      }
+    }
+    case 'validation_brief': {
+      return {
+        description: 'Create a validation brief for one source-backed idea.',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: [
+                `Create a validation brief for this idea: ${String(args.idOrSlug ?? '')}.`,
+                'Use get_business_idea first. Include target customer, painful trigger, riskiest assumption, no-code/manual MVP, 10 first-customer channels, interview questions, pricing test, and a 7-day validation plan.',
+                'Do not invent source claims. Include source evidence URLs.',
+              ].join('\n'),
+            },
+          },
+        ],
+      }
+    }
+    default:
+      throw new Error(`Unknown prompt: ${name ?? 'missing'}`)
+  }
+}
+
 function compactIdeaSummary(idea: BusinessIdea) {
   return {
     id: idea.id,
@@ -385,11 +672,13 @@ function profileToQuery(profile: { whoAreYou?: string; skills?: string[]; notes?
 }
 
 function filterIdeasForMcp(ideas: BusinessIdea[], filters: Record<string, unknown>) {
-  const query = typeof filters.query === 'string' ? normalizeText(filters.query) : ''
+  const queryTokens = typeof filters.query === 'string'
+    ? normalizeText(filters.query).split(/\s+/).filter(Boolean)
+    : []
 
   return ideas
     .filter((idea) => {
-      if (query && !normalizeText(searchText(idea)).includes(query)) {
+      if (queryTokens.length > 0 && !matchesQueryTokens(searchText(idea), queryTokens)) {
         return false
       }
 
@@ -428,6 +717,11 @@ function filterIdeasForMcp(ideas: BusinessIdea[], filters: Record<string, unknow
       return true
     })
     .sort((a, b) => b.sourceConfidence - a.sourceConfidence || b.aiLeverage - a.aiLeverage || a.title.localeCompare(b.title))
+}
+
+function matchesQueryTokens(value: string, queryTokens: string[]) {
+  const normalized = normalizeText(value)
+  return queryTokens.every((token) => normalized.includes(token))
 }
 
 function compactFilterEcho(filters: Record<string, unknown>) {
@@ -471,6 +765,21 @@ function countFacet(values: string[]) {
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 50)
     .map(([value, count]) => ({ value, count }))
+}
+
+function buildFacets(ideas: BusinessIdea[]) {
+  return {
+    industries: countFacet(ideas.flatMap((idea) => idea.industries)),
+    businessModels: countFacet(ideas.flatMap((idea) => idea.businessModels)),
+    skills: countFacet(ideas.flatMap((idea) => idea.skillsRequired)),
+    sources: countFacet(ideas.map((idea) => sourceLabel(idea))),
+    capitalRequired: countFacet(ideas.map((idea) => idea.capitalRequired)),
+    difficulty: countFacet(ideas.map((idea) => idea.difficulty)),
+    timeToRevenue: countFacet(ideas.map((idea) => idea.timeToRevenue)),
+    soloFounderFit: countFacet(ideas.map((idea) => String(idea.soloFounderFit))),
+    aiLeverage: countFacet(ideas.map((idea) => String(idea.aiLeverage))),
+    b2bFit: countFacet(ideas.map((idea) => String(idea.b2bFit))),
+  }
 }
 
 function clampNumber(value: unknown, fallback: number, min: number, max: number) {
