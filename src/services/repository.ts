@@ -134,7 +134,7 @@ class D1R2IdeasRepository implements IdeasRepository {
 
   async listIdeas() {
     const rows = await this.db
-      .prepare('select id, r2_json_key from business_ideas order by created_at desc limit 250')
+      .prepare('select id, r2_json_key from business_ideas order by created_at desc, id asc')
       .all<{ id: string; r2_json_key: string }>()
 
     const ideas = await Promise.all(rows.results.map((row) => this.getIdeaFromR2(row.r2_json_key)))
