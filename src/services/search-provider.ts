@@ -67,8 +67,14 @@ class CloudflareAISearchProvider implements IdeaSearchProvider {
     const fallbackResults = await fallback.searchIdeas(input)
     const aiSearchLimit = Math.min(50, Math.max(input.limit ?? 10, 10))
     const searchQuery = buildAiSearchQuery(input.query)
+    const legacySearchInput = {
+      query: searchQuery,
+      max_num_results: aiSearchLimit,
+      filters: toAiSearchMetadataFilters(input.filters),
+    }
     const payload = await this.search
       .search({
+        ...legacySearchInput,
         query: searchQuery,
         messages: [{ role: 'user', content: searchQuery }],
         max_num_results: aiSearchLimit,
@@ -88,13 +94,18 @@ class CloudflareAISearchProvider implements IdeaSearchProvider {
           },
         },
       })
-      .catch(() => null)
+      .catch(() => this.search.search(legacySearchInput).catch(() => null))
 
     if (!payload) {
       return fallbackResults
     }
 
-    const matches = payload.chunks ?? payload.data ?? payload.result?.data ?? []
+    let matches = payload.chunks ?? payload.data ?? payload.result?.data ?? []
+
+    if (matches.length === 0) {
+      const legacyPayload = await this.search.search(legacySearchInput).catch(() => null)
+      matches = legacyPayload?.chunks ?? legacyPayload?.data ?? legacyPayload?.result?.data ?? []
+    }
     const results: IdeaSearchResult[] = []
     const queryTerms = expandQuery(input.query)
 
@@ -309,7 +320,7 @@ const queryAliases: Record<string, string[]> = {
   ai: ['ai', 'artificial', 'intelligence', 'sztuczna', 'inteligencja', 'llm', 'gpt', 'chatgpt', 'agent', 'agents', 'chatbot'],
   games: ['game', 'games', 'gaming', 'gamified', 'gamification', 'gry', 'gra', 'gier', 'grami', 'board', 'card', 'video'],
   developer: ['developer', 'developers', 'programista', 'programisty', 'programistow', 'kod', 'kodowanie', 'coding', 'software', 'devtools', 'typescript', 'automation'],
-  local: ['local', 'lokalny', 'lokalne', 'nearby', 'city', 'services', 'uslugi'],
+  local: ['local', 'lokalny', 'lokalne', 'lokalnych', 'lokalnego', 'nearby', 'city', 'services', 'uslugi'],
   onsite: ['onsite', 'offline', 'physical', 'inperson', 'offsite', 'stacjonarny', 'stacjonarne', 'teren', 'event', 'events', 'retreat', 'retreats'],
   newsletter: ['newsletter', 'newsletters', 'biuletyn', 'content', 'creator', 'creators', 'media'],
   education: ['education', 'edtech', 'learning', 'school', 'students', 'nauka', 'edukacja', 'szkola'],
@@ -323,6 +334,7 @@ const stopWords = new Set([
   'businesses',
   'biznes',
   'biznesu',
+  'biznesow',
   'pomysl',
   'pomysly',
   'idea',
