@@ -54,6 +54,9 @@ codex mcp list
 
 - `business-ideas://overview`: dataset overview and MCP usage guidance.
 - `business-ideas://facets`: JSON facet counts.
+
+Resource templates:
+
 - `business-ideas://idea/{id-or-slug}`: compact context for one idea.
 
 ## Prompts
@@ -122,12 +125,20 @@ curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
   --data '{"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"business-ideas://overview"}}'
 ```
 
+Resource templates:
+
+```bash
+curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
+  -H 'content-type: application/json' \
+  --data '{"jsonrpc":"2.0","id":5,"method":"resources/templates/list"}'
+```
+
 Prompts:
 
 ```bash
 curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
   -H 'content-type: application/json' \
-  --data '{"jsonrpc":"2.0","id":5,"method":"prompts/get","params":{"name":"validation_brief","arguments":{"idOrSlug":"my-ai-tax-guy"}}}'
+  --data '{"jsonrpc":"2.0","id":6,"method":"prompts/get","params":{"name":"validation_brief","arguments":{"idOrSlug":"my-ai-tax-guy"}}}'
 ```
 
 Expected: compact JSON-RPC responses with `serverInfo`, tool schemas, source-backed ideas, resource contents, or prompt messages.

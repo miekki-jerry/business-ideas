@@ -69,6 +69,9 @@ Resources:
 
 - `business-ideas://overview`
 - `business-ideas://facets`
+
+Resource templates:
+
 - `business-ideas://idea/{id-or-slug}`
 
 Prompts:

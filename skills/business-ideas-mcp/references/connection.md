@@ -84,12 +84,20 @@ curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
   --data '{"jsonrpc":"2.0","id":3,"method":"resources/read","params":{"uri":"business-ideas://overview"}}'
 ```
 
+Resource template:
+
+```bash
+curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
+  -H 'content-type: application/json' \
+  --data '{"jsonrpc":"2.0","id":4,"method":"resources/templates/list"}'
+```
+
 Prompt:
 
 ```bash
 curl -sS -X POST https://business-ideas.miekki-jerry.workers.dev/mcp \
   -H 'content-type: application/json' \
-  --data '{"jsonrpc":"2.0","id":4,"method":"prompts/get","params":{"name":"validation_brief","arguments":{"idOrSlug":"my-ai-tax-guy"}}}'
+  --data '{"jsonrpc":"2.0","id":5,"method":"prompts/get","params":{"name":"validation_brief","arguments":{"idOrSlug":"my-ai-tax-guy"}}}'
 ```
 
 ## Tool Names
@@ -111,6 +119,9 @@ Resources:
 
 - `business-ideas://overview`
 - `business-ideas://facets`
+
+Resource template:
+
 - `business-ideas://idea/{id-or-slug}`
 
 Prompts:

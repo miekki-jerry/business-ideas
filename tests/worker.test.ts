@@ -245,6 +245,19 @@ describe('business ideas worker', () => {
       expect.objectContaining({ uri: 'business-ideas://overview' }),
     )
 
+    const resourceTemplatesResponse = await app.request('/mcp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'resources/templates/list' }),
+    })
+    expect(resourceTemplatesResponse.status).toBe(200)
+    const resourceTemplatesJson = (await resourceTemplatesResponse.json()) as {
+      result: { resourceTemplates: Array<{ uriTemplate: string }> }
+    }
+    expect(resourceTemplatesJson.result.resourceTemplates).toContainEqual(
+      expect.objectContaining({ uriTemplate: 'business-ideas://idea/{id-or-slug}' }),
+    )
+
     const resourceReadResponse = await app.request('/mcp', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

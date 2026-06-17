@@ -273,6 +273,14 @@ export async function handleMcpRequest(
     })
   }
 
+  if (request.method === 'resources/templates/list') {
+    return c.json({
+      jsonrpc: '2.0',
+      id: request.id ?? null,
+      result: { resourceTemplates: listResourceTemplates() },
+    })
+  }
+
   if (request.method === 'resources/read') {
     try {
       const result = await readResource(request.params?.uri, repository)
@@ -313,7 +321,7 @@ export async function handleMcpRequest(
 
   if (request.method !== 'tools/call') {
     return jsonRpcError(c, request.id ?? null, -32601, 'Method not found', [
-      'Use initialize, tools/list, tools/call, resources/list, resources/read, prompts/list, or prompts/get.',
+      'Use initialize, tools/list, tools/call, resources/list, resources/templates/list, resources/read, prompts/list, or prompts/get.',
     ])
   }
 
@@ -493,10 +501,15 @@ function listResources() {
       description: 'Facet counts for industries, models, skills, sources, scores, difficulty, capital, and time to revenue.',
       mimeType: 'application/json',
     },
+  ]
+}
+
+function listResourceTemplates() {
+  return [
     {
-      uri: 'business-ideas://idea/{id-or-slug}',
+      uriTemplate: 'business-ideas://idea/{id-or-slug}',
       name: 'Business idea by ID or slug',
-      description: 'Template URI. Replace {id-or-slug} with an idea id or slug to read compact idea context.',
+      description: 'Read compact context for one idea. Replace {id-or-slug} with an idea id or slug.',
       mimeType: 'application/json',
     },
   ]

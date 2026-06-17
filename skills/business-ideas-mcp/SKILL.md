@@ -36,6 +36,9 @@ It also exposes compact resources:
 
 - `business-ideas://overview`
 - `business-ideas://facets`
+
+And a resource template:
+
 - `business-ideas://idea/{id-or-slug}`
 
 And prompts:
