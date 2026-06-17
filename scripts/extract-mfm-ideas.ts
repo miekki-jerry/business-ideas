@@ -38,8 +38,8 @@ type ChunkExtraction = {
 const outDir = '.private/extractions/mfm'
 const model = process.env.OPENAI_MODEL ?? 'gpt-5-mini'
 
-export async function extractMfmIdeas(options: { episodeIndex?: number; maxChunks?: number } = {}) {
-  const apiKey = readEnv('OPENAI_API_KEY')
+export async function extractMfmIdeas(options: { episodeIndex?: number; maxChunks?: number; fromCache?: boolean } = {}) {
+  const apiKey = options.fromCache ? '' : readEnv('OPENAI_API_KEY')
   const prepared = readJson<PreparedTranscript[]>('.private/transcripts/mfm/prepared-transcripts.json')
   const transcripts = prepared.filter((item) => item.transcriptStatus === 'available' && item.chunkPath)
   const selected = options.episodeIndex ? transcripts.filter((item) => item.index === options.episodeIndex) : transcripts
@@ -58,6 +58,10 @@ export async function extractMfmIdeas(options: { episodeIndex?: number; maxChunk
 
     for (const chunk of limitedChunks) {
       let existing = chunkResults.find((result) => result.chunk.id === chunk.id)
+
+      if (!existing && options.fromCache) {
+        continue
+      }
 
       if (!existing) {
         const extraction = await extractChunkWithRetry(apiKey, transcript, chunk)
@@ -251,6 +255,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const maxChunks = process.argv.includes('--max-chunks')
     ? Number(process.argv[process.argv.indexOf('--max-chunks') + 1])
     : undefined
+  const fromCache = process.argv.includes('--from-cache')
 
   if (process.argv.includes('--dry-run')) {
     const prepared = readJson<PreparedTranscript[]>('.private/transcripts/mfm/prepared-transcripts.json')
@@ -261,7 +266,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(0)
   }
 
-  extractMfmIdeas({ episodeIndex, maxChunks })
+  extractMfmIdeas({ episodeIndex, maxChunks, fromCache })
     .then((ideas) => console.log(`Extracted ${ideas.length} MFM ideas`))
     .catch((error) => {
       console.error(error)
