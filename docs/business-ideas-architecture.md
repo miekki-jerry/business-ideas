@@ -52,17 +52,32 @@ POST /mcp
 
 ## MCP
 
-The Worker exposes a compact JSON-RPC `/mcp` endpoint for typed tools:
+The Worker exposes a compact read-only MCP `/mcp` endpoint for typed tools, resources, and prompts:
 
 - `search_business_ideas`
+- `count_business_ideas`
+- `list_business_ideas`
 - `get_business_idea`
 - `recommend_business_ideas`
 - `get_random_business_ideas`
 - `get_idea_evidence`
+- `get_business_idea_facets`
 - `find_similar_business_ideas`
 - `list_sources`
 
-Tool responses are intentionally compact and include `hints` or `recoveryHints` when helpful. They do not return full transcripts.
+Resources:
+
+- `business-ideas://overview`
+- `business-ideas://facets`
+- `business-ideas://idea/{id-or-slug}`
+
+Prompts:
+
+- `recommend_for_builder_profile`
+- `compare_business_ideas`
+- `validation_brief`
+
+Tool and resource responses are intentionally compact and include `hints` or `recoveryHints` when helpful. They do not return full transcripts.
 
 Example:
 

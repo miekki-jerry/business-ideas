@@ -22,12 +22,27 @@ For exact setup commands and verification calls, read `references/connection.md`
 The custom MCP exposes compact, source-backed tools:
 
 - `search_business_ideas`
+- `count_business_ideas`
+- `list_business_ideas`
 - `get_business_idea`
 - `recommend_business_ideas`
 - `get_random_business_ideas`
 - `get_idea_evidence`
+- `get_business_idea_facets`
 - `find_similar_business_ideas`
 - `list_sources`
+
+It also exposes compact resources:
+
+- `business-ideas://overview`
+- `business-ideas://facets`
+- `business-ideas://idea/{id-or-slug}`
+
+And prompts:
+
+- `recommend_for_builder_profile`
+- `compare_business_ideas`
+- `validation_brief`
 
 Keep responses compact. Prefer idea IDs, slugs, short summaries, and evidence timestamp URLs over full source text. Never ask the MCP to return full transcripts; the public database intentionally exposes short quotes and timestamp links only.
 
