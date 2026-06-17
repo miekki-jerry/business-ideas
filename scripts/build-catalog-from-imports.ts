@@ -75,6 +75,7 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
     readOptionalJson<MfmExtractedIdea[]>('.private/extractions/mfm/mfm-reviewed-ideas.json') ??
     readOptionalJson<MfmExtractedIdea[]>('.private/extractions/mfm/mfm-extracted-ideas.json') ??
     []
+  const preservedIdeas = readOptionalJson<BusinessIdea[]>(join(inputDir, 'preserved-business-ideas.json')) ?? []
 
   const sources: Source[] = [
     {
@@ -135,6 +136,7 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
   for (const row of extractedMfmIdeas.filter(isUsableMfmIdea)) {
     addMfmIdea(ideas, row, seenSlugs)
   }
+  preserveExistingIdeas(ideas, preservedIdeas, seenSlugs)
 
   writeCatalogFiles({ sources, sourceItems, ideas })
   writeSeedSql({ sources, sourceItems, ideas })
@@ -156,6 +158,20 @@ function addMfmIdea(ideas: BusinessIdea[], row: MfmExtractedIdea, seenSlugs: Map
   }
 
   ideas.push(toMfmBusinessIdea(row, seenSlugs))
+}
+
+function preserveExistingIdeas(ideas: BusinessIdea[], preservedIdeas: BusinessIdea[], seenSlugs: Map<string, number>) {
+  const existingSlugs = new Set(ideas.map((idea) => idea.slug))
+
+  for (const idea of preservedIdeas) {
+    if (existingSlugs.has(idea.slug)) {
+      continue
+    }
+
+    ideas.push(idea)
+    existingSlugs.add(idea.slug)
+    seenSlugs.set(idea.slug, Math.max(seenSlugs.get(idea.slug) ?? 0, 1))
+  }
 }
 
 function toMfmBusinessIdea(row: MfmExtractedIdea, seenSlugs: Map<string, number>): BusinessIdea {
