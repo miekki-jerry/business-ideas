@@ -1,6 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { BusinessIdea, CapitalRequired, Difficulty, Source, SourceItem, TimeToRevenue } from '@/features/business-ideas/types'
+import type {
+  BusinessIdea,
+  CapitalRequired,
+  Difficulty,
+  Source,
+  SourceItem,
+  SourceType,
+  TimeToRevenue,
+} from '@/features/business-ideas/types'
 import { ideaToSearchMarkdown } from '@/lib/markdown'
 
 type HubspotImport = {
@@ -64,6 +72,60 @@ type MfmExtractedIdea = {
   }
 }
 
+type CuratedSourceImport = {
+  sources: Array<{
+    id: string
+    type: SourceType
+    name: string
+    url?: string
+    author?: string
+    description?: string
+    items?: Array<{
+      id: string
+      title: string
+      url: string
+      externalId?: string
+      publishedAt?: string
+      language?: string
+      transcriptStatus?: SourceItem['transcriptStatus']
+    }>
+  }>
+  ideas: Array<{
+    title: string
+    oneLiner: string
+    summary: string
+    problem?: string
+    targetCustomer?: string
+    solution?: string
+    businessModels: string[]
+    industries: string[]
+    skillsRequired?: string[]
+    distributionChannels?: string[]
+    capitalRequired: CapitalRequired
+    difficulty: Difficulty
+    timeToRevenue: TimeToRevenue
+    soloFounderFit: number
+    aiLeverage: number
+    b2bFit: number
+    boringBusinessScore: number
+    competitionLevel?: BusinessIdea['competitionLevel']
+    geography?: string
+    monetization?: string
+    sourceConfidence: number
+    evidence: Array<{
+      sourceId?: string
+      sourceItemId?: string
+      sourceTitle: string
+      sourceType?: SourceType
+      sourceUrl: string
+      urlAtTimestamp?: string
+      quote?: string
+      reason?: string
+      relevanceScore?: number
+    }>
+  }>
+}
+
 const now = '2026-06-16T00:00:00.000Z'
 const outDir = '.private/r2'
 
@@ -76,6 +138,10 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
     readOptionalJson<MfmExtractedIdea[]>('.private/extractions/mfm/mfm-extracted-ideas.json') ??
     []
   const preservedIdeas = readOptionalJson<BusinessIdea[]>(join(inputDir, 'preserved-business-ideas.json')) ?? []
+  const curatedImport = readOptionalJson<CuratedSourceImport>(join(inputDir, 'curated-source-ideas.json')) ?? {
+    sources: [],
+    ideas: [],
+  }
 
   const sources: Source[] = [
     {
@@ -98,6 +164,16 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
       createdAt: now,
       updatedAt: now,
     },
+    ...curatedImport.sources.map((source) => ({
+      id: source.id,
+      type: source.type,
+      name: source.name,
+      url: source.url,
+      author: source.author,
+      description: source.description,
+      createdAt: now,
+      updatedAt: now,
+    })),
   ]
 
   const sourceItems: SourceItem[] = [
@@ -129,12 +205,29 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
         updatedAt: now,
       }
     }),
+    ...curatedImport.sources.flatMap((source) =>
+      (source.items ?? []).map((item) => ({
+        id: item.id,
+        sourceId: source.id,
+        title: item.title,
+        url: item.url,
+        externalId: item.externalId,
+        publishedAt: item.publishedAt,
+        language: item.language ?? 'en',
+        transcriptStatus: item.transcriptStatus,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    ),
   ]
 
   const seenSlugs = new Map<string, number>()
   const ideas = hubspot.ideas.map((row) => toBusinessIdea(row, seenSlugs))
   for (const row of extractedMfmIdeas.filter(isUsableMfmIdea)) {
     addMfmIdea(ideas, row, seenSlugs)
+  }
+  for (const row of curatedImport.ideas.filter(isUsableCuratedIdea)) {
+    addCuratedIdea(ideas, row, seenSlugs)
   }
   preserveExistingIdeas(ideas, preservedIdeas, seenSlugs)
 
@@ -146,6 +239,26 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
     sourceItems: sourceItems.length,
     ideas: ideas.length,
   }
+}
+
+function addCuratedIdea(
+  ideas: BusinessIdea[],
+  row: CuratedSourceImport['ideas'][number],
+  seenSlugs: Map<string, number>,
+) {
+  const existing = ideas.find((idea) => normalizeKey(idea.title) === normalizeKey(row.title))
+
+  if (existing) {
+    existing.evidence.push(
+      ...row.evidence.map((evidence, index) =>
+        toCuratedEvidence(evidence, existing.id, existing.slug, existing.evidence.length + index + 1),
+      ),
+    )
+    existing.sourceConfidence = Math.max(existing.sourceConfidence, row.sourceConfidence)
+    return
+  }
+
+  ideas.push(toCuratedBusinessIdea(row, seenSlugs))
 }
 
 function addMfmIdea(ideas: BusinessIdea[], row: MfmExtractedIdea, seenSlugs: Map<string, number>) {
@@ -171,6 +284,67 @@ function preserveExistingIdeas(ideas: BusinessIdea[], preservedIdeas: BusinessId
     ideas.push(idea)
     existingSlugs.add(idea.slug)
     seenSlugs.set(idea.slug, Math.max(seenSlugs.get(idea.slug) ?? 0, 1))
+  }
+}
+
+function toCuratedBusinessIdea(row: CuratedSourceImport['ideas'][number], seenSlugs: Map<string, number>): BusinessIdea {
+  const baseSlug = slugify(row.title)
+  const seenCount = seenSlugs.get(baseSlug) ?? 0
+  seenSlugs.set(baseSlug, seenCount + 1)
+  const slug = seenCount === 0 ? baseSlug : `${baseSlug}-${seenCount + 1}`
+  const id = `idea_${slug}`
+  const text = `${row.title} ${row.oneLiner} ${row.summary} ${row.problem ?? ''} ${row.solution ?? ''}`.toLowerCase()
+
+  return {
+    id,
+    slug,
+    title: normalizeText(row.title),
+    oneLiner: normalizeText(row.oneLiner),
+    summary: normalizeText(row.summary),
+    problem: normalizeText(row.problem),
+    targetCustomer: normalizeText(row.targetCustomer),
+    solution: normalizeText(row.solution),
+    businessModels: normalizeExtractedList(row.businessModels, ['service']),
+    industries: normalizeExtractedList(row.industries, ['business']),
+    skillsRequired: normalizeExtractedList(row.skillsRequired ?? [], skillsForMfmIdea(text)),
+    distributionChannels: normalizeExtractedList(row.distributionChannels ?? [], distributionForMfmIdea(text)),
+    capitalRequired: row.capitalRequired,
+    difficulty: row.difficulty,
+    timeToRevenue: row.timeToRevenue,
+    soloFounderFit: clampScore(row.soloFounderFit),
+    aiLeverage: clampScore(row.aiLeverage),
+    b2bFit: clampScore(row.b2bFit),
+    boringBusinessScore: clampScore(row.boringBusinessScore),
+    competitionLevel: row.competitionLevel ?? 'medium',
+    geography: normalizeText(row.geography),
+    monetization: normalizeText(row.monetization),
+    sourceConfidence: row.sourceConfidence,
+    createdAt: now,
+    updatedAt: now,
+    evidence: row.evidence.map((evidence, index) => toCuratedEvidence(evidence, id, slug, index + 1)),
+  }
+}
+
+function toCuratedEvidence(
+  row: CuratedSourceImport['ideas'][number]['evidence'][number],
+  ideaId: string,
+  slug: string,
+  index: number,
+) {
+  const suffix = String(index).padStart(3, '0')
+
+  return {
+    id: `evidence_${slug}_curated_${suffix}`,
+    ideaId,
+    sourceId: row.sourceId,
+    sourceItemId: row.sourceItemId,
+    sourceTitle: row.sourceTitle,
+    sourceType: row.sourceType,
+    sourceUrl: row.sourceUrl,
+    urlAtTimestamp: row.urlAtTimestamp ?? row.sourceUrl,
+    quote: shortQuote(normalizeText(row.quote), 18),
+    reason: normalizeText(row.reason) || 'Curated from an external source with a concrete customer problem or founder case study.',
+    relevanceScore: row.relevanceScore,
   }
 }
 
@@ -363,6 +537,18 @@ function isUsableMfmIdea(row: MfmExtractedIdea) {
   )
 }
 
+function isUsableCuratedIdea(row: CuratedSourceImport['ideas'][number]) {
+  return (
+    row.sourceConfidence >= 0.7 &&
+    Boolean(normalizeText(row.title)) &&
+    Boolean(normalizeText(row.oneLiner)) &&
+    Boolean(normalizeText(row.summary)) &&
+    row.businessModels.length > 0 &&
+    row.industries.length > 0 &&
+    row.evidence.some((evidence) => Boolean(normalizeText(evidence.sourceTitle)) && Boolean(normalizeText(evidence.sourceUrl)))
+  )
+}
+
 function normalizeExtractedList(values: string[], fallback: string[]) {
   const normalized = values.map(normalizeText).filter(Boolean).map(normalizeLabel)
   return normalized.length > 0 ? [...new Set(normalized)] : fallback
@@ -384,6 +570,10 @@ function distributionForMfmIdea(text: string) {
   if (/local|real estate|home|service/.test(text)) return ['local SEO', 'cold outreach', 'referrals']
   if (/creator|content|newsletter|media/.test(text)) return ['X', 'newsletter', 'creator partnerships']
   return ['SEO', 'cold outreach', 'partnerships']
+}
+
+function clampScore(value: number) {
+  return Math.max(1, Math.min(10, Math.round(value)))
 }
 
 function slugify(value: string) {
