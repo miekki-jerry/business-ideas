@@ -13,6 +13,7 @@
     "seed": "tsx scripts/seed-sample-data.ts",
     "import:hubspot": "tsx scripts/import-hubspot-mfm.ts",
     "import:mfm": "tsx scripts/import-mfm-latest.ts",
+    "match:mfm-youtube": "tsx scripts/match-mfm-youtube.ts",
     "prepare:mfm-transcripts": "tsx scripts/prepare-mfm-transcripts.ts",
     "extract:mfm": "tsx scripts/extract-mfm-ideas.ts",
     "review:mfm": "tsx scripts/review-mfm-ideas.ts",

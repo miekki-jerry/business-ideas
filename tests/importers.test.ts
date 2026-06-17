@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseHubspotIdeas } from '../scripts/import-hubspot-mfm'
-import { parseMfmEpisodes } from '../scripts/import-mfm-latest'
+import { parseMfmEpisodes, parseMfmRssEpisodes } from '../scripts/import-mfm-latest'
 
 describe('import parsers', () => {
   it('extracts HubSpot candidate ideas from html', () => {
@@ -32,6 +32,19 @@ describe('import parsers', () => {
     expect(episodes[0]).toMatchObject({
       title: 'I put 80% of my money in the S&P',
       url: 'https://www.mfmpod.com/a/',
+    })
+  })
+
+  it('extracts MFM episodes from RSS items', () => {
+    const episodes = parseMfmRssEpisodes(
+      '<item><title>Dumb iPhone Apps Are Making People Rich Again (Here’s how)</title><pubDate>Tue, 24 Feb 2026 14:35:00 -0000</pubDate></item>',
+    )
+
+    expect(episodes[0]).toMatchObject({
+      title: 'Dumb iPhone Apps Are Making People Rich Again (Here’s how)',
+      url: 'https://www.mfmpod.com/dumb-iphone-apps-are-making-people-rich-again-heres-how/',
+      publishedAt: '2026-02-24T14:35:00.000Z',
+      transcriptStatus: 'unavailable',
     })
   })
 })

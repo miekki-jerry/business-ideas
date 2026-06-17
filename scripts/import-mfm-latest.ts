@@ -49,6 +49,21 @@ export function parseMfmEpisodes(html: string, limit = 10): MfmEpisode[] {
   return episodes
 }
 
+export function parseMfmRssEpisodes(xml: string, limit = 40): MfmEpisode[] {
+  return [...xml.matchAll(/<item>[\s\S]*?<\/item>/g)].slice(0, limit).map((match) => {
+    const item = match[0]
+    const title = decodeHtml(readTag(item, 'title'))
+    const pubDate = readTag(item, 'pubDate')
+
+    return {
+      title,
+      url: new URL(`/${slugifyForUrl(title)}/`, episodesUrl).toString(),
+      publishedAt: pubDate ? new Date(pubDate).toISOString() : undefined,
+      transcriptStatus: 'unavailable',
+    }
+  })
+}
+
 function parseJsonLdItemList(html: string, limit: number): MfmEpisode[] {
   const scripts = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)]
 
@@ -83,17 +98,57 @@ function decodeHtml(value: string) {
 }
 
 async function main() {
-  const response = await fetch(episodesUrl)
+  const args = parseArgs(process.argv.slice(2))
+  const limit = args.limit ?? 10
+  const source = args.source ?? 'html'
+  const importUrl = source === 'rss' ? 'https://feeds.megaphone.fm/HS2300184645' : episodesUrl
+  const response = await fetch(importUrl)
   if (!response.ok) {
     throw new Error(`MFM fetch failed: ${response.status}`)
   }
 
-  const html = await response.text()
-  const episodes = parseMfmEpisodes(html)
+  const body = await response.text()
+  const episodes = source === 'rss' ? parseMfmRssEpisodes(body, limit) : parseMfmEpisodes(body, limit)
   mkdirSync('.private/imports', { recursive: true })
-  writeFileSync(join('.private/imports', 'mfm-episodes-raw.html'), html)
+  writeFileSync(join('.private/imports', source === 'rss' ? 'mfm-episodes-raw.xml' : 'mfm-episodes-raw.html'), body)
   writeFileSync(join('.private/imports', 'mfm-latest-episodes.json'), JSON.stringify({ episodesUrl, episodes }, null, 2))
   console.log(`Imported ${episodes.length} MFM episode candidates into .private/imports`)
+}
+
+function readTag(xml: string, tag: string) {
+  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`))
+  return match ? match[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : ''
+}
+
+function slugifyForUrl(value: string) {
+  return decodeHtml(value)
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/["'“”‘’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function parseArgs(args: string[]) {
+  const parsed: { limit?: number; source?: 'html' | 'rss' } = {}
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--limit') {
+      parsed.limit = Number(args[index + 1])
+      index += 1
+    }
+    if (arg === '--source') {
+      const source = args[index + 1]
+      if (source !== 'html' && source !== 'rss') {
+        throw new Error(`Unsupported MFM source: ${source}`)
+      }
+      parsed.source = source
+      index += 1
+    }
+  }
+
+  return parsed
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
