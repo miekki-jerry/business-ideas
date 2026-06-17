@@ -10,11 +10,33 @@ export type Env = {
 
 export type AISearchBinding = {
   search(input: {
-    query: string
+    query?: string
+    messages?: Array<{ role: 'user'; content: string }>
     max_num_results?: number
     filters?: Record<string, string | number | boolean | Array<string | number | boolean>>
+    ai_search_options?: {
+      retrieval?: {
+        retrieval_type?: 'vector' | 'keyword' | 'hybrid'
+        match_threshold?: number
+        max_num_results?: number
+        filters?: Record<string, unknown>
+        fusion_method?: 'rrf' | 'max'
+        keyword_match_mode?: 'and' | 'or'
+      }
+      reranking?: {
+        enabled?: boolean
+        model?: string
+      }
+    }
   }): Promise<{
     data?: Array<{
+      filename?: string
+      path?: string
+      item?: { key?: string }
+      score?: number
+      metadata?: Record<string, unknown>
+    }>
+    chunks?: Array<{
       filename?: string
       path?: string
       item?: { key?: string }

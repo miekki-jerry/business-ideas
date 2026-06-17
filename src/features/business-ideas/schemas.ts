@@ -33,7 +33,7 @@ export const ideaSearchInputSchema = z.object({
   query: z.string().min(1).max(1000),
   filters: ideaFiltersSchema.optional(),
   profile: userIdeaProfileSchema.optional(),
-  limit: z.number().int().min(1).max(25).default(10).optional(),
+  limit: z.number().int().min(1).max(200).default(10).optional(),
 })
 
 export const recommendInputSchema = z.object({

@@ -50,6 +50,62 @@ describe('business ideas worker', () => {
     expect(json.results[0]?.idea.id).toBe('idea_my_ai_tax_guy')
   })
 
+  it('expands Polish queries before calling AI Search', async () => {
+    let searchQuery = ''
+    const response = await app.request(
+      '/api/business-ideas/search',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'gry', limit: 1 }),
+      },
+      {
+        BUSINESS_IDEAS_SEARCH: {
+          search: async (input) => {
+            searchQuery = String(input.query)
+            return { data: [{ item: { key: 'ideas/idea_ai_phone_agents_local_businesses.md' }, score: 0.7 }] }
+          },
+        },
+      },
+    )
+
+    expect(response.status).toBe(200)
+    expect(searchQuery).toContain('games')
+    expect(searchQuery).toContain('gaming')
+  })
+
+  it('reads new AI Search chunks response shape', async () => {
+    const response = await app.request(
+      '/api/business-ideas/search',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'local phone agent', limit: 1 }),
+      },
+      {
+        BUSINESS_IDEAS_SEARCH: {
+          search: async () => ({
+            chunks: [{ item: { key: 'ideas/idea_ai_phone_agents_local_businesses.md' }, score: 0.91 }],
+          }),
+        },
+      },
+    )
+
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as { results: Array<{ idea: { id: string } }> }
+    expect(json.results[0]?.idea.id).toBe('idea_ai_phone_agents_local_businesses')
+  })
+
+  it('accepts larger search result limits for lazy loading', async () => {
+    const response = await app.request('/api/business-ideas/search', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query: 'AI', limit: 200 }),
+    })
+
+    expect(response.status).toBe(200)
+  })
+
   it('lists ideas', async () => {
     const response = await app.request('/api/business-ideas/ideas')
     expect(response.status).toBe(200)
