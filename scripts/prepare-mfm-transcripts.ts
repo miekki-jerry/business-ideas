@@ -137,9 +137,9 @@ function findKnownSourceItemId(
   known: { byPageUrl: Map<string, string>; byYoutubeId: Map<string, string>; byYoutubeUrl: Map<string, string> },
 ) {
   return (
-    known.byPageUrl.get(match.pageUrl) ??
     (match.youtubeId ? known.byYoutubeId.get(match.youtubeId) : undefined) ??
-    (match.youtubeUrl ? known.byYoutubeUrl.get(match.youtubeUrl) : undefined)
+    (match.youtubeUrl ? known.byYoutubeUrl.get(match.youtubeUrl) : undefined) ??
+    known.byPageUrl.get(match.pageUrl)
   )
 }
 
