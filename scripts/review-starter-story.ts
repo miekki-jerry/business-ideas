@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import type { StarterStoryIdea } from './extract-starter-story'
 
 type Candidate = StarterStoryIdea & {
@@ -11,17 +11,33 @@ type ReviewResponse = { decisions: Decision[] }
 
 const model = process.env.OPENAI_MODEL ?? 'gpt-5-mini'
 
-export async function reviewStarterStoryIdeas() {
+export async function reviewStarterStoryIdeas(options: { batchIndex?: number } = {}) {
   const apiKey = readEnv('OPENAI_API_KEY')
   const ideas = readJson<Array<StarterStoryIdea & { video: Candidate['video'] }>>(
     '.private/extractions/starter-story/starter-story-extracted-ideas.json',
   ).map((idea, index) => ({ ...idea, reviewId: `starter_story_candidate_${String(index + 1).padStart(4, '0')}` }))
   const decisions = new Map<string, Decision>()
+  const reviewDir = '.private/extractions/starter-story/reviews'
+  mkdirSync(reviewDir, { recursive: true })
+  const batches = chunk(ideas, 30)
 
-  for (const [index, batch] of chunk(ideas, 30).entries()) {
-    const review = await reviewBatch(apiKey, batch)
+  for (const [index, batch] of batches.entries()) {
+    if (options.batchIndex !== undefined && options.batchIndex !== index) continue
+    const cachePath = `${reviewDir}/batch-${String(index).padStart(3, '0')}.json`
+    const review = existsSync(cachePath) ? readJson<ReviewResponse>(cachePath) : await reviewBatch(apiKey, batch)
+    if (!existsSync(cachePath)) writeFileSync(cachePath, JSON.stringify(review, null, 2))
     for (const decision of review.decisions) decisions.set(decision.id, decision)
-    console.log(`Reviewed batch ${index + 1}/${Math.ceil(ideas.length / 30)}`)
+    console.log(`Reviewed batch ${index + 1}/${batches.length}`)
+  }
+
+  if (options.batchIndex !== undefined) {
+    return ideas
+  }
+
+  for (const index of batches.keys()) {
+    const cachePath = `${reviewDir}/batch-${String(index).padStart(3, '0')}.json`
+    if (!existsSync(cachePath)) throw new Error(`Missing review batch ${index + 1}/${batches.length}`)
+    for (const decision of readJson<ReviewResponse>(cachePath).decisions) decisions.set(decision.id, decision)
   }
 
   const reviewed = ideas.map((idea) => ({
@@ -117,8 +133,14 @@ function readJson<T>(path: string) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  reviewStarterStoryIdeas().then((ideas) => {
-    console.log(`Reviewed ${ideas.length}; accepted ${ideas.filter((idea) => idea.review.decision === 'accept').length}`)
+  const batchIndex = process.argv.includes('--batch') ? Number(process.argv[process.argv.indexOf('--batch') + 1]) : undefined
+  reviewStarterStoryIdeas({ batchIndex }).then((ideas) => {
+    if (batchIndex !== undefined) {
+      console.log(`Cached review batch ${batchIndex}`)
+      return
+    }
+    const reviewed = ideas as Array<Candidate & { review: Decision }>
+    console.log(`Reviewed ${reviewed.length}; accepted ${reviewed.filter((idea) => idea.review.decision === 'accept').length}`)
   }).catch((error) => {
     console.error(error)
     process.exit(1)
