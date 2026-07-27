@@ -21,6 +21,7 @@
     "extract:starter-story": "tsx scripts/extract-starter-story.ts",
     "review:starter-story": "tsx scripts/review-starter-story.ts",
     "build:starter-story": "tsx scripts/build-starter-story-import.ts",
+    "publish:starter-story": "tsx scripts/publish-starter-story.ts",
     "build:catalog": "tsx scripts/build-catalog-from-imports.ts",
     "index:ai-search": "tsx scripts/index-ai-search.ts",
     "rebuild:search": "tsx scripts/rebuild-search-index.ts"
