@@ -42,6 +42,10 @@ type Json3Caption = {
   }>
 }
 
+type AsrTranscript = {
+  segments?: Array<{ start: number; end: number; text: string }>
+}
+
 const sourceId = 'source_starter_story_youtube'
 const rootDir = '.private/transcripts/starter-story'
 const rawDir = join(rootDir, 'raw')
@@ -62,12 +66,15 @@ export function prepareStarterStory() {
     const infoPath = join(rawDir, `${flat.id}.info.json`)
     const info = existsSync(infoPath) ? readJson<VideoInfo>(infoPath) : undefined
     const captionPath = findCaption(flat.id)
+    const asrPath = join(rawDir, `${flat.id}.asr.json`)
     const sourceItemId = `source_item_starter_story_youtube_${flat.id}`
     const url = `https://www.youtube.com/watch?v=${flat.id}`
     const chunkPath = join(chunksDir, `${sourceItemId}.json`)
 
-    if (captionPath) {
-      const segments = parseJson3Caption(readJson<Json3Caption>(captionPath))
+    if (captionPath || existsSync(asrPath)) {
+      const segments = captionPath
+        ? parseJson3Caption(readJson<Json3Caption>(captionPath))
+        : parseAsrTranscript(readJson<AsrTranscript>(asrPath))
       writeFileSync(
         chunkPath,
         JSON.stringify(chunkTranscript({ sourceItemId, sourceUrl: url, segments, targetSeconds: 120 }), null, 2),
@@ -84,8 +91,8 @@ export function prepareStarterStory() {
       publishedAt: toPublishedAt(info),
       durationSec: info?.duration ?? flat.duration,
       language: 'en',
-      transcriptStatus: captionPath ? ('available' as const) : ('unavailable' as const),
-      chunkPath: captionPath ? chunkPath : undefined,
+      transcriptStatus: captionPath || existsSync(asrPath) ? ('available' as const) : ('unavailable' as const),
+      chunkPath: captionPath || existsSync(asrPath) ? chunkPath : undefined,
       metadata: {
         channel: info?.channel ?? channel.channel,
         channelId: info?.channel_id ?? channel.channel_id,
@@ -114,6 +121,16 @@ export function prepareStarterStory() {
   }
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
   return manifest
+}
+
+function parseAsrTranscript(transcript: AsrTranscript): TranscriptSegment[] {
+  return (transcript.segments ?? [])
+    .map((segment) => ({
+      startSec: Math.max(0, Math.round(segment.start)),
+      endSec: Math.max(0, Math.round(segment.end)),
+      text: segment.text.replace(/\s+/g, ' ').trim(),
+    }))
+    .filter((segment) => segment.text.length > 0)
 }
 
 function findCaption(videoId: string) {
