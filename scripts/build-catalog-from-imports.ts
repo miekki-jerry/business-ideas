@@ -120,6 +120,9 @@ type CuratedSourceImport = {
       sourceTitle: string
       sourceType?: SourceType
       sourceUrl: string
+      chunkId?: string
+      startSec?: number
+      endSec?: number
       urlAtTimestamp?: string
       quote?: string
       reason?: string
@@ -362,6 +365,9 @@ function toCuratedEvidence(
     sourceTitle: row.sourceTitle,
     sourceType: row.sourceType,
     sourceUrl: row.sourceUrl,
+    chunkId: row.chunkId,
+    startSec: row.startSec,
+    endSec: row.endSec,
     urlAtTimestamp: row.urlAtTimestamp ?? row.sourceUrl,
     quote: shortQuote(normalizeText(row.quote), 18),
     reason: normalizeText(row.reason) || 'Curated from an external source with a concrete customer problem or founder case study.',
