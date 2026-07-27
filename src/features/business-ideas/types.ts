@@ -34,6 +34,7 @@ export type SourceItem = {
   durationSec?: number
   language?: string
   r2Key?: string
+  rawMetadata?: Record<string, unknown>
   transcriptStatus?: 'available' | 'unavailable' | 'pending'
   createdAt: string
   updatedAt: string

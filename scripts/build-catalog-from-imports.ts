@@ -86,7 +86,9 @@ type CuratedSourceImport = {
       url: string
       externalId?: string
       publishedAt?: string
+      durationSec?: number
       language?: string
+      rawMetadata?: Record<string, unknown>
       transcriptStatus?: SourceItem['transcriptStatus']
     }>
   }>
@@ -213,7 +215,9 @@ export function buildCatalogFromImports(inputDir = '.private/imports') {
         url: item.url,
         externalId: item.externalId,
         publishedAt: item.publishedAt,
+        durationSec: item.durationSec,
         language: item.language ?? 'en',
+        rawMetadata: item.rawMetadata,
         transcriptStatus: item.transcriptStatus,
         createdAt: now,
         updatedAt: now,
@@ -514,7 +518,7 @@ function writeSeedSql(catalog: { sources: Source[]; sourceItems: SourceItem[]; i
 
   for (const item of catalog.sourceItems) {
     lines.push(
-      `insert into source_items (id, source_id, title, url, external_id, published_at, duration_sec, language, r2_key, raw_metadata_json, created_at, updated_at) values (${q(item.id)}, ${q(item.sourceId)}, ${q(item.title)}, ${q(item.url)}, ${q(item.externalId)}, ${q(item.publishedAt)}, ${n(item.durationSec)}, ${q(item.language)}, ${q(item.r2Key)}, ${q(JSON.stringify({ transcriptStatus: item.transcriptStatus }))}, ${q(item.createdAt)}, ${q(item.updatedAt)});`,
+      `insert into source_items (id, source_id, title, url, external_id, published_at, duration_sec, language, r2_key, raw_metadata_json, created_at, updated_at) values (${q(item.id)}, ${q(item.sourceId)}, ${q(item.title)}, ${q(item.url)}, ${q(item.externalId)}, ${q(item.publishedAt)}, ${n(item.durationSec)}, ${q(item.language)}, ${q(item.r2Key)}, ${q(JSON.stringify({ ...item.rawMetadata, transcriptStatus: item.transcriptStatus }))}, ${q(item.createdAt)}, ${q(item.updatedAt)});`,
     )
   }
 
