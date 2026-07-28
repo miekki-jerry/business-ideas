@@ -9,6 +9,8 @@ import type {
   ImpactConfidence,
   ImpactEstimateBasis,
   LocalizedText,
+  WorkflowCapability,
+  WorkflowContext,
   WorkflowSource,
 } from './types'
 
@@ -21,6 +23,13 @@ type Blueprint = {
   category: AgentWorkflowCategory
   department: Pair
   archetype: AgentWorkflowArchetype
+  contexts?: WorkflowContext[]
+  primaryUser?: Pair
+  benefit?: Pair
+  complexity?: 1 | 2 | 3 | 4 | 5
+  capabilities?: WorkflowCapability[]
+  beforeAgentic?: Pair
+  whyAgentic?: Pair
   industries: string[]
   companySizes: CompanySize[]
   difficulty: AgentWorkflowDifficulty
@@ -339,6 +348,83 @@ function buildWorkflow(blueprint: Blueprint): AgentWorkflow {
       'Weryfikuje tożsamość i uprawnienia, symuluje ograniczoną akcję i wykonuje wyłącznie zatwierdzoną zmianę z weryfikacją oraz dowodem możliwości wycofania.',
     ],
   } satisfies Record<AgentWorkflowArchetype, Pair>
+  const agenticDifference = {
+    'enrich-and-route': {
+      before: [
+        'Rule-based routing handled only clean, predefined fields and broke when the request was incomplete or written in natural language.',
+        'Reguły działały tylko na czystych, z góry znanych polach. Nie radziły sobie z niepełnym zgłoszeniem ani opisem napisanym własnymi słowami.',
+      ],
+      now: [
+        'The agent can interpret unstructured context, gather missing evidence, explain its recommendation, and pause when confidence is low.',
+        'Agent rozumie nieustrukturyzowany kontekst, dobiera brakujące dowody, uzasadnia rekomendację i zatrzymuje się przy niskiej pewności.',
+      ],
+    },
+    'draft-and-approve': {
+      before: [
+        'Templates could merge known fields, but they could not understand source documents or adapt the draft to exceptions.',
+        'Szablony potrafiły wstawić znane pola, ale nie rozumiały dokumentów źródłowych ani wyjątków.',
+      ],
+      now: [
+        'The agent reads source material, drafts the right version for the case, cites evidence, and leaves the final send or write to a person.',
+        'Agent czyta materiały źródłowe, tworzy wersję dopasowaną do sprawy, wskazuje dowody i zostawia człowiekowi ostateczne wysłanie lub zapis.',
+      ],
+    },
+    'investigate-and-report': {
+      before: [
+        'Traditional automation could collect records, but a person still had to compare sources, resolve conflicts, and write the conclusion.',
+        'Tradycyjna automatyzacja potrafiła zebrać rekordy, ale człowiek nadal musiał porównać źródła, rozstrzygnąć sprzeczności i opisać wnioski.',
+      ],
+      now: [
+        'The agent can plan a search, inspect multiple sources, distinguish facts from inference, and return a cited report.',
+        'Agent planuje research, sprawdza wiele źródeł, oddziela fakty od wniosków i zwraca raport z odnośnikami.',
+      ],
+    },
+    'reconcile-and-flag': {
+      before: [
+        'Exact matching worked for identical records; ambiguous names, missing fields, and inconsistent documents still created a manual queue.',
+        'Dokładne dopasowanie działało dla identycznych rekordów. Niejasne nazwy, brakujące pola i niespójne dokumenty nadal wymagały ręcznej pracy.',
+      ],
+      now: [
+        'The agent combines deterministic checks with document understanding, explains uncertain matches, and sends only real exceptions for review.',
+        'Agent łączy twarde reguły z rozumieniem dokumentów, wyjaśnia niepewne dopasowania i wysyła do sprawdzenia tylko rzeczywiste wyjątki.',
+      ],
+    },
+    'monitor-and-alert': {
+      before: [
+        'Threshold alerts fired on isolated numbers and created noise because they did not understand context or prior decisions.',
+        'Alerty progowe reagowały na pojedyncze liczby i generowały szum, bo nie rozumiały kontekstu ani wcześniejszych decyzji.',
+      ],
+      now: [
+        'The agent keeps context over time, checks several signals, explains what changed, and recommends a bounded next step.',
+        'Agent pamięta kontekst, sprawdza kilka sygnałów, wyjaśnia zmianę i proponuje bezpieczny kolejny krok.',
+      ],
+    },
+    'orchestrate-multi-step': {
+      before: [
+        'A fixed workflow required every system and input to behave exactly as expected; one exception stopped the entire chain.',
+        'Sztywny workflow wymagał, by każdy system i dane zachowywały się dokładnie zgodnie z planem. Jeden wyjątek zatrzymywał cały proces.',
+      ],
+      now: [
+        'The agent chooses the next tool from the current state, recovers from common exceptions, and asks for a decision at the right boundary.',
+        'Agent dobiera kolejne narzędzie do bieżącego stanu, radzi sobie z typowymi wyjątkami i prosi o decyzję we właściwym momencie.',
+      ],
+    },
+    'auto-execute-with-guardrails': {
+      before: [
+        'API and RPA automations could repeat known clicks, but they were brittle when the interface or situation changed.',
+        'Automatyzacje API i RPA potrafiły powtarzać znane kliknięcia, ale łatwo psuły się po zmianie interfejsu lub sytuacji.',
+      ],
+      now: [
+        'With vision, browser control, and reasoning, the agent can inspect the current screen, adapt the path, and stop before a sensitive action.',
+        'Dzięki vision, sterowaniu przeglądarką i rozumowaniu agent sprawdza bieżący ekran, dostosowuje ścieżkę i zatrzymuje się przed wrażliwą akcją.',
+      ],
+    },
+  } satisfies Record<AgentWorkflowArchetype, { before: Pair; now: Pair }>
+  const defaultContexts: WorkflowContext[] = blueprint.companySizes.includes('small')
+    ? ['small-business', 'team']
+    : ['team', 'enterprise']
+  const defaultComplexity = blueprint.difficulty === 'low' ? 2 : blueprint.difficulty === 'medium' ? 3 : 4
+  const defaultCapabilities = getCapabilities(blueprint)
 
   return {
     id: `workflow_${blueprint.slug.replaceAll('-', '_')}`,
@@ -352,6 +438,13 @@ function buildWorkflow(blueprint: Blueprint): AgentWorkflow {
     category: blueprint.category,
     department: l(blueprint.department),
     archetype: blueprint.archetype,
+    contexts: blueprint.contexts ?? defaultContexts,
+    primaryUser: l(blueprint.primaryUser ?? blueprint.department),
+    benefit: l(blueprint.benefit ?? blueprint.outputs[0]),
+    complexity: blueprint.complexity ?? defaultComplexity,
+    capabilities: blueprint.capabilities ?? defaultCapabilities,
+    beforeAgentic: l(blueprint.beforeAgentic ?? agenticDifference[blueprint.archetype].before),
+    whyAgentic: l(blueprint.whyAgentic ?? agenticDifference[blueprint.archetype].now),
     industries: blueprint.industries,
     companySizes: blueprint.companySizes,
     difficulty: blueprint.difficulty,
@@ -382,6 +475,31 @@ function buildWorkflow(blueprint: Blueprint): AgentWorkflow {
   }
 }
 
+function getCapabilities(blueprint: Blueprint): WorkflowCapability[] {
+  const capabilities: WorkflowCapability[] = ['tool-use', 'human-approval']
+
+  if (blueprint.archetype === 'investigate-and-report') {
+    capabilities.push('web-research', 'document-understanding')
+  }
+  if (blueprint.archetype === 'draft-and-approve' || blueprint.archetype === 'reconcile-and-flag') {
+    capabilities.push('document-understanding')
+  }
+  if (blueprint.archetype === 'monitor-and-alert') {
+    capabilities.push('memory', 'scheduled-monitoring')
+  }
+  if (blueprint.archetype === 'orchestrate-multi-step') {
+    capabilities.push('multi-step-planning')
+  }
+  if (blueprint.archetype === 'auto-execute-with-guardrails') {
+    capabilities.push('browser-actions', 'multi-step-planning')
+  }
+  if (blueprint.slug.includes('transcript')) {
+    capabilities.push('transcription')
+  }
+
+  return capabilities
+}
+
 type CompactSpec = {
   slug: string
   title: Pair
@@ -389,6 +507,13 @@ type CompactSpec = {
   category: AgentWorkflowCategory
   department: Pair
   archetype: AgentWorkflowArchetype
+  contexts?: WorkflowContext[]
+  primaryUser?: Pair
+  benefit?: Pair
+  complexity?: 1 | 2 | 3 | 4 | 5
+  capabilities?: WorkflowCapability[]
+  beforeAgentic?: Pair
+  whyAgentic?: Pair
   industries: string[]
   riskLevel: AgentWorkflowRiskLevel
   maturity: AgentWorkflowMaturity
@@ -523,6 +648,13 @@ function compact(specs: CompactSpec[]): Blueprint[] {
     category: spec.category,
     department: spec.department,
     archetype: spec.archetype,
+    contexts: spec.contexts,
+    primaryUser: spec.primaryUser,
+    benefit: spec.benefit,
+    complexity: spec.complexity,
+    capabilities: spec.capabilities,
+    beforeAgentic: spec.beforeAgentic,
+    whyAgentic: spec.whyAgentic,
     industries: spec.industries,
     companySizes: spec.riskLevel === 'high' ? ['medium', 'enterprise'] : ['small', 'medium', 'enterprise'],
     difficulty: spec.riskLevel === 'high' ? 'high' : 'medium',

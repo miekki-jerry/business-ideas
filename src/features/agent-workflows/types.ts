@@ -4,6 +4,10 @@ export type LocalizedText = {
 }
 
 export type AgentWorkflowCategory =
+  | 'personal'
+  | 'travel'
+  | 'research'
+  | 'creator'
   | 'sales'
   | 'customer-support'
   | 'marketing'
@@ -27,6 +31,19 @@ export type AgentWorkflowDifficulty = 'low' | 'medium' | 'high'
 export type AgentWorkflowMaturity = 'emerging' | 'proven' | 'scaled'
 export type AgentWorkflowRiskLevel = 'low' | 'medium' | 'high'
 export type CompanySize = 'small' | 'medium' | 'enterprise'
+export type WorkflowContext = 'personal' | 'freelance' | 'small-business' | 'team' | 'enterprise'
+export type WorkflowCapability =
+  | 'web-research'
+  | 'browser-actions'
+  | 'vision'
+  | 'transcription'
+  | 'document-understanding'
+  | 'tool-use'
+  | 'memory'
+  | 'scheduled-monitoring'
+  | 'multi-step-planning'
+  | 'multi-agent'
+  | 'human-approval'
 export type ImpactEstimateBasis = 'case_study' | 'vendor_report' | 'research' | 'editorial_estimate'
 export type ImpactConfidence = 'low' | 'medium' | 'high'
 
@@ -76,6 +93,13 @@ export type AgentWorkflow = {
   category: AgentWorkflowCategory
   department: LocalizedText
   archetype: AgentWorkflowArchetype
+  contexts: WorkflowContext[]
+  primaryUser: LocalizedText
+  benefit: LocalizedText
+  complexity: 1 | 2 | 3 | 4 | 5
+  capabilities: WorkflowCapability[]
+  beforeAgentic: LocalizedText
+  whyAgentic: LocalizedText
   industries: string[]
   companySizes: CompanySize[]
   difficulty: AgentWorkflowDifficulty
