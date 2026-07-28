@@ -4,7 +4,6 @@ import { agentWorkflows } from '../src/features/agent-workflows/data'
 
 const outputPath = resolve('.private/agent-workflows-seed.sql')
 const sql = [
-  'begin transaction;',
   'delete from agent_workflows;',
   ...agentWorkflows
     .filter((workflow) => workflow.published)
@@ -24,7 +23,6 @@ const sql = [
           .map(sqlValue)
           .join(', ')});`,
     ),
-  'commit;',
   '',
 ].join('\n')
 
