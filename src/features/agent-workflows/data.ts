@@ -449,7 +449,7 @@ const compactPatterns = {
     steps: [
       ['Normalize records and validate period, currency, and ownership.', 'Normalizuje rekordy i sprawdza okres, walutę oraz ownership.'],
       ['Apply deterministic matching rules before model-assisted classification.', 'Stosuje deterministyczne reguły dopasowania przed klasyfikacją wspieraną modelem.'],
-      ['Prepare {{decision}} and isolate every unresolved difference.', 'Przygotowuje {{decision}} i izoluje każdą niewyjaśnioną różnicę.'],
+      ['Prepare a result covering {{decision}} and isolate every unresolved difference.', 'Przygotowuje wynik obejmujący {{decision}}; każdą niewyjaśnioną różnicę kieruje do review.'],
       ['Post only approved matches and retain the reconciliation evidence.', 'Zapisuje wyłącznie zatwierdzone dopasowania i zachowuje dowody uzgodnienia.'],
     ],
     risk: ['A plausible but incorrect match can hide a material difference.', 'Wiarygodne, lecz błędne dopasowanie może ukryć istotną różnicę.'],
