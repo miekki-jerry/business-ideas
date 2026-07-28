@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "seed": "tsx scripts/seed-sample-data.ts",
+    "seed:agent-workflows": "tsx scripts/generate-agent-workflows-seed.ts",
     "import:hubspot": "tsx scripts/import-hubspot-mfm.ts",
     "import:mfm": "tsx scripts/import-mfm-latest.ts",
     "match:mfm-youtube": "tsx scripts/match-mfm-youtube.ts",

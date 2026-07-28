@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import type { Context } from 'hono'
 import type { z } from 'zod'
 import { ideaSearchInputSchema, recommendInputSchema } from '@/features/business-ideas/schemas'
+import { createAgentWorkflowsRepository } from '@/features/agent-workflows/repository'
 import { badRequest, notFound, ok, serverError } from '@/lib/http'
 import { handleMcpRequest } from '@/mcp/server'
 import { createIdeasRepository, type Env } from '@/services/repository'
@@ -10,6 +11,7 @@ import { createSearchProvider } from '@/services/search-provider'
 
 export const app = new Hono<{ Bindings: Env }>()
 const businessIdeasApi = new Hono<{ Bindings: Env }>()
+const agentWorkflowsApi = new Hono<{ Bindings: Env }>()
 
 app.use(
   '*',
@@ -31,6 +33,17 @@ businessIdeasApi.get('/health', async (c) => {
       transport: 'streamable-http-json-rpc',
     },
   })
+})
+
+agentWorkflowsApi.get('/', async (c) => {
+  const repository = createAgentWorkflowsRepository(c.env?.BUSINESS_IDEAS_DB)
+  return ok(c, { workflows: await repository.list() })
+})
+
+agentWorkflowsApi.get('/slug/:slug', async (c) => {
+  const repository = createAgentWorkflowsRepository(c.env?.BUSINESS_IDEAS_DB)
+  const workflow = await repository.getBySlug(c.req.param('slug'))
+  return workflow ? ok(c, { workflow }) : notFound(c, 'Agent workflow not found')
 })
 
 businessIdeasApi.get('/random', async (c) => {
@@ -116,6 +129,8 @@ businessIdeasApi.get('/sources/:id', async (c) => {
 
 app.route('/', businessIdeasApi)
 app.route('/api/business-ideas', businessIdeasApi)
+app.route('/agent-workflows', agentWorkflowsApi)
+app.route('/api/agent-workflows', agentWorkflowsApi)
 
 app.post('/mcp', async (c) => {
   const repository = createIdeasRepository(c.env)
