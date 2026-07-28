@@ -69,6 +69,26 @@ describe('agent workflows dataset', () => {
       }
     }
   })
+
+  it('keeps capability filters aligned with the actual workflow', () => {
+    const bySlug = new Map(agentWorkflows.map((workflow) => [workflow.slug, workflow]))
+
+    expect(bySlug.get('transcript-to-content-campaign')?.capabilities).not.toContain('transcription')
+    expect(bySlug.get('sales-transcript-to-crm-hygiene')?.capabilities).not.toContain('transcription')
+
+    for (const slug of [
+      'brand-compliance-review',
+      'variance-reporting-with-evidence',
+      'litigation-evidence-chronology',
+      'payment-exception-resolution',
+    ]) {
+      expect(bySlug.get(slug)?.capabilities).not.toContain('web-research')
+    }
+
+    expect(bySlug.get('brand-compliance-review')?.capabilities).toContain('vision')
+    expect(bySlug.get('legacy-access-provisioning')?.whyAgentic.pl).not.toContain('vision')
+    expect(bySlug.get('multi-brand-voice-support')?.whyAgentic.pl).not.toContain('vision')
+  })
 })
 
 describe('agent workflows API', () => {

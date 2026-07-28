@@ -592,10 +592,6 @@ function getCapabilities(blueprint: Blueprint): WorkflowCapability[] {
   if (blueprint.archetype === 'auto-execute-with-guardrails') {
     capabilities.push('browser-actions', 'multi-step-planning')
   }
-  if (blueprint.slug.includes('transcript')) {
-    capabilities.push('transcription')
-  }
-
   return capabilities
 }
 
@@ -1221,11 +1217,11 @@ const expansionBlueprints = expand([
   {
     slug: 'job-application-progress-tracker',
     title: ['Job application progress tracker', 'Aplikacje o pracę bez zgubionych terminów'],
-    oneLiner: ['Track every application, detect stalled stages, and prepare the right follow-up.', 'Śledzi każdą aplikację, wykrywa zatrzymane etapy i przygotowuje właściwy follow-up.'],
+    oneLiner: ['Track every application, detect stalled stages, and prepare the right follow-up.', 'Śledzi każdą aplikację, wykrywa zatrzymane etapy i przygotowuje właściwe przypomnienie.'],
     category: 'personal',
     contexts: ['personal'],
     primaryUser: ['Job seeker', 'Osoba szukająca pracy'],
-    benefit: ['No interview, assignment, or follow-up falls through the cracks.', 'Żadna rozmowa, zadanie ani follow-up nie przepada.'],
+    benefit: ['No interview, assignment, or follow-up falls through the cracks.', 'Żadna rozmowa, zadanie ani ważne przypomnienie nie przepada.'],
     complexity: 2,
     capabilities: ['tool-use', 'memory', 'scheduled-monitoring', 'human-approval'],
     archetype: 'monitor-and-alert',
@@ -1415,7 +1411,7 @@ const expansionBlueprints = expand([
     category: 'finance',
     contexts: ['freelance', 'small-business'],
     primaryUser: ['Freelancer or small-business owner', 'Freelancer lub właściciel małej firmy'],
-    benefit: ['Late invoices get consistent follow-up without damaging the client relationship.', 'Zaległe faktury mają konsekwentny follow-up bez psucia relacji z klientem.'],
+    benefit: ['Late invoices get consistent follow-up without damaging the client relationship.', 'Zaległe faktury są konsekwentnie przypominane bez psucia relacji z klientem.'],
     complexity: 2,
     capabilities: ['tool-use', 'memory', 'scheduled-monitoring', 'human-approval'],
     archetype: 'draft-and-approve',
@@ -1600,7 +1596,7 @@ const expansionBlueprints = expand([
   },
   {
     slug: 'portfolio-case-study-builder',
-    title: ['Portfolio case study builder', 'Case study z dowodami zamiast pustych sloganów'],
+    title: ['Portfolio case study builder', 'Opis projektu z dowodami zamiast pustych sloganów'],
     oneLiner: ['Collect project artifacts, decisions, and measured outcomes into a client-approved story.', 'Zbiera materiały projektu, decyzje i zmierzone wyniki w historię zatwierdzoną przez klienta.'],
     category: 'creator',
     contexts: ['freelance', 'small-business'],
@@ -1613,7 +1609,7 @@ const expansionBlueprints = expand([
     trigger: ['A project closes and its publication permissions are known.', 'Projekt się kończy i znane są zgody na publikację.'],
     subject: ['brief, project files, decisions, feedback, outcomes, and confidentiality limits', 'brief, pliki projektu, decyzje, feedback, wyniki i ograniczenia poufności'],
     decision: ['a factual case-study draft with unsupported claims removed', 'rzeczowy szkic case study bez niepotwierdzonych tez'],
-    output: ['Client-approved portfolio case study', 'Case study portfolio zatwierdzone przez klienta'],
+    output: ['Client-approved portfolio case study', 'Opis projektu do portfolio zatwierdzony przez klienta'],
     system: 'Files and CMS',
     sourceKeys: ['openaiAgentsTools', 'openclawOperations'],
   },
@@ -1676,11 +1672,11 @@ const expansionBlueprints = expand([
   },
   { slug: 'missed-call-to-booked-visit', title: ['Missed call to booked visit', 'Nieodebrane połączenie zamienione w umówioną wizytę'], oneLiner: ['Identify the caller, understand the request, and prepare an available appointment for approval.', 'Rozpoznaje dzwoniącego, ustala potrzebę i przygotowuje dostępny termin do potwierdzenia.'], category: 'sales', contexts: ['small-business'], primaryUser: ['Local service owner', 'Właściciel lokalnej firmy usługowej'], benefit: ['Fewer valuable calls disappear after business hours.', 'Mniej wartościowych telefonów przepada po godzinach pracy.'], complexity: 3, capabilities: ['transcription', 'tool-use', 'memory', 'human-approval'], archetype: 'enrich-and-route', industries: ['home services', 'healthcare', 'beauty'], trigger: ['A business call is missed or reaches voicemail.', 'Połączenie firmowe nie zostaje odebrane lub trafia na pocztę głosową.'], subject: ['caller, voicemail, service area, service type, urgency, and calendar', 'dzwoniącego, wiadomość głosową, obszar, usługę, pilność i kalendarz'], decision: ['a qualified callback or available appointment option', 'kwalifikowany callback lub dostępny termin wizyty'], output: ['Approved callback task or booking', 'Zatwierdzone zadanie oddzwonienia lub rezerwacja'], system: 'Phone and calendar', sourceKeys: ['n8nCases', 'openclawOperations'] },
   { slug: 'appointment-no-show-recovery', title: ['Appointment no-show recovery', 'Wolny termin szybko wraca do kalendarza'], oneLiner: ['Detect a no-show, offer the right rebooking options, and notify the waitlist after approval.', 'Wykrywa nieobecność, proponuje właściwe nowe terminy i po akceptacji powiadamia listę oczekujących.'], category: 'operations', contexts: ['small-business'], primaryUser: ['Appointment-based business owner', 'Właściciel firmy pracującej na wizytach'], benefit: ['Empty slots are recovered with less manual calling.', 'Puste okienka są odzyskiwane bez ręcznego obdzwonienia klientów.'], complexity: 3, capabilities: ['tool-use', 'memory', 'multi-step-planning', 'human-approval'], archetype: 'orchestrate-multi-step', industries: ['healthcare', 'beauty', 'professional services'], trigger: ['A booked customer does not check in within the allowed window.', 'Umówiony klient nie pojawia się w ustalonym oknie.'], subject: ['booking, cancellation policy, customer preferences, open slots, and waitlist', 'rezerwację, zasady anulowania, preferencje klienta, wolne terminy i listę oczekujących'], decision: ['a rebooking path and the next eligible waitlist contact', 'ścieżkę ponownej rezerwacji i następną osobę z listy oczekujących'], output: ['Approved rebooking and waitlist messages', 'Zatwierdzone wiadomości o nowym terminie i wolnym miejscu'], system: 'Booking system and messaging', sourceKeys: ['n8nCases', 'openaiAgentsTools'] },
-  { slug: 'customer-review-response', title: ['Customer review response', 'Opinie klientów obsłużone, zanim przerodzą się w kryzys'], oneLiner: ['Find new reviews, check the customer history, and draft a factual response or private escalation.', 'Znajduje nowe opinie, sprawdza historię klienta i przygotowuje rzeczową odpowiedź lub prywatną eskalację.'], category: 'customer-support', contexts: ['small-business', 'team'], primaryUser: ['Local business owner or service manager', 'Właściciel lokalnej firmy lub manager obsługi'], benefit: ['Public feedback gets a timely, consistent response.', 'Publiczny feedback szybko dostaje spójną odpowiedź.'], complexity: 2, capabilities: ['web-research', 'tool-use', 'memory', 'human-approval'], archetype: 'draft-and-approve', industries: ['hospitality', 'retail', 'home services'], trigger: ['A new public review is posted.', 'Pojawia się nowa publiczna opinia.'], subject: ['review, customer record, service history, response policy, and prior contact', 'opinię, rekord klienta, historię usługi, zasady odpowiedzi i wcześniejszy kontakt'], decision: ['a public reply or private recovery escalation', 'publiczną odpowiedź lub prywatną eskalację naprawczą'], output: ['Owner-approved review response', 'Odpowiedź na opinię zatwierdzona przez właściciela'], system: 'Review platforms and CRM', sourceKeys: ['n8nCases', 'openaiAgentsTools'] },
-  { slug: 'small-business-quote-followup', title: ['Small-business quote follow-up', 'Wycena nie ginie po wysłaniu'], oneLiner: ['Track each quote, customer response, and expiry date, then prepare the right follow-up.', 'Śledzi każdą wycenę, odpowiedź klienta i termin ważności, a potem przygotowuje właściwy follow-up.'], category: 'sales', contexts: ['small-business'], primaryUser: ['Small-business owner or salesperson', 'Właściciel małej firmy lub sprzedawca'], benefit: ['Promising quotes receive follow-up without nagging every customer.', 'Obiecujące wyceny dostają follow-up bez nękania każdego klienta.'], complexity: 2, capabilities: ['tool-use', 'memory', 'scheduled-monitoring', 'human-approval'], archetype: 'monitor-and-alert', industries: ['home services', 'construction', 'professional services'], trigger: ['A sent quote reaches its follow-up date without a decision.', 'Wysłana wycena osiąga termin follow-upu bez decyzji klienta.'], subject: ['quote, customer messages, validity date, project timing, and prior follow-ups', 'wycenę, wiadomości klienta, termin ważności, harmonogram projektu i wcześniejsze follow-upy'], decision: ['the next useful follow-up or a close-lost recommendation', 'następny sensowny follow-up lub rekomendację zamknięcia sprawy'], output: ['Approved quote follow-up and status', 'Zatwierdzony follow-up wyceny i aktualny status'], system: 'CRM and email', sourceKeys: ['n8nCases', 'openclawCommunity'] },
+  { slug: 'customer-review-response', title: ['Customer review response', 'Opinie klientów obsłużone, zanim przerodzą się w kryzys'], oneLiner: ['Find new reviews, check the customer history, and draft a factual response or private escalation.', 'Znajduje nowe opinie, sprawdza historię klienta i przygotowuje rzeczową odpowiedź lub prywatną eskalację.'], category: 'customer-support', contexts: ['small-business', 'team'], primaryUser: ['Local business owner or service manager', 'Właściciel lokalnej firmy lub manager obsługi'], benefit: ['Public feedback gets a timely, consistent response.', 'Każda publiczna opinia szybko dostaje spójną odpowiedź.'], complexity: 2, capabilities: ['web-research', 'tool-use', 'memory', 'human-approval'], archetype: 'draft-and-approve', industries: ['hospitality', 'retail', 'home services'], trigger: ['A new public review is posted.', 'Pojawia się nowa publiczna opinia.'], subject: ['review, customer record, service history, response policy, and prior contact', 'opinię, rekord klienta, historię usługi, zasady odpowiedzi i wcześniejszy kontakt'], decision: ['a public reply or private recovery escalation', 'publiczną odpowiedź lub prywatną eskalację naprawczą'], output: ['Owner-approved review response', 'Odpowiedź na opinię zatwierdzona przez właściciela'], system: 'Review platforms and CRM', sourceKeys: ['n8nCases', 'openaiAgentsTools'] },
+  { slug: 'small-business-quote-followup', title: ['Small-business quote follow-up', 'Wycena nie ginie po wysłaniu'], oneLiner: ['Track each quote, customer response, and expiry date, then prepare the right follow-up.', 'Śledzi każdą wycenę, odpowiedź klienta i termin ważności, a potem przygotowuje właściwe przypomnienie.'], category: 'sales', contexts: ['small-business'], primaryUser: ['Small-business owner or salesperson', 'Właściciel małej firmy lub sprzedawca'], benefit: ['Promising quotes receive follow-up without nagging every customer.', 'Obiecujące wyceny są przypominane bez nękania każdego klienta.'], complexity: 2, capabilities: ['tool-use', 'memory', 'scheduled-monitoring', 'human-approval'], archetype: 'monitor-and-alert', industries: ['home services', 'construction', 'professional services'], trigger: ['A sent quote reaches its follow-up date without a decision.', 'Mija termin przypomnienia o wysłanej wycenie, a klient nadal nie podjął decyzji.'], subject: ['quote, customer messages, validity date, project timing, and prior follow-ups', 'wycenę, wiadomości klienta, termin ważności, harmonogram projektu i wcześniejsze przypomnienia'], decision: ['the next useful follow-up or a close-lost recommendation', 'następne sensowne przypomnienie lub rekomendację zamknięcia sprawy'], output: ['Approved quote follow-up and status', 'Zatwierdzone przypomnienie o wycenie i aktualny status'], system: 'CRM and email', sourceKeys: ['n8nCases', 'openclawCommunity'] },
   { slug: 'small-business-stock-reorder-watch', title: ['Small-business stock reorder watch', 'Towar zamówiony przed wyczerpaniem zapasu'], oneLiner: ['Watch sales velocity, lead time, current stock, and minimum order rules before suggesting a reorder.', 'Śledzi tempo sprzedaży, czas dostawy, zapas i minima zamówień przed propozycją zakupu.'], category: 'operations', contexts: ['small-business', 'team'], primaryUser: ['Retail or ecommerce owner', 'Właściciel sklepu lub ecommerce'], benefit: ['Fewer stockouts without blindly over-ordering.', 'Mniej braków towaru bez zamawiania na zapas w ciemno.'], complexity: 3, capabilities: ['tool-use', 'memory', 'scheduled-monitoring', 'human-approval'], archetype: 'monitor-and-alert', industries: ['retail', 'ecommerce'], trigger: ['Stock cover crosses the approved reorder threshold.', 'Pokrycie zapasu spada poniżej zatwierdzonego progu.'], subject: ['stock, sales velocity, open orders, lead time, seasonality, and supplier minimums', 'zapas, tempo sprzedaży, otwarte zamówienia, czas dostawy, sezonowość i minima dostawcy'], decision: ['a bounded reorder quantity and timing with assumptions', 'ograniczoną ilość i termin zamówienia wraz z założeniami'], output: ['Owner-approved purchase suggestion', 'Propozycja zakupu zatwierdzona przez właściciela'], system: 'Inventory and accounting', sourceKeys: ['n8nCases', 'openclawOperations'] },
   { slug: 'small-business-daily-cash-brief', title: ['Small-business daily cash brief', 'Poranny obraz gotówki, sprzedaży i pilnych problemów'], oneLiner: ['Reconcile yesterday’s sales, payouts, refunds, and bills into one short owner brief.', 'Uzgadnia wczorajszą sprzedaż, wypłaty, zwroty i rachunki w jednym krótkim przeglądzie dla właściciela.'], category: 'finance', contexts: ['small-business'], primaryUser: ['Small-business owner', 'Właściciel małej firmy'], benefit: ['The owner sees cash surprises before starting the day.', 'Właściciel widzi niespodzianki w gotówce przed rozpoczęciem dnia.'], complexity: 3, capabilities: ['tool-use', 'document-understanding', 'memory', 'scheduled-monitoring', 'human-approval'], archetype: 'reconcile-and-flag', industries: ['retail', 'hospitality', 'ecommerce'], trigger: ['The daily finance review runs after payment feeds settle.', 'Codzienny przegląd finansów uruchamia się po zaksięgowaniu danych płatniczych.'], subject: ['sales, payment payouts, refunds, bank activity, bills, and prior baseline', 'sprzedaż, wypłaty operatorów, zwroty, aktywność bankową, rachunki i wcześniejszy poziom'], decision: ['matched cash movement, material differences, and today’s action list', 'uzgodnione przepływy, istotne różnice i listę działań na dziś'], output: ['Reviewed daily owner cash brief', 'Sprawdzony dzienny przegląd gotówki dla właściciela'], system: 'POS, bank, and accounting', sourceKeys: ['openclawCommunity', 'n8nCases'] },
-  { slug: 'small-team-shared-inbox-routing', title: ['Small-team shared inbox routing', 'Każda wiadomość od klienta ma właściwego opiekuna'], oneLiner: ['Recognize the customer and request, find the right owner, and flag messages that need a fast response.', 'Rozpoznaje klienta i sprawę, wybiera właściwego opiekuna i oznacza wiadomości wymagające szybkiej reakcji.'], category: 'customer-support', contexts: ['small-business', 'team'], primaryUser: ['Small support or operations team', 'Mały zespół obsługi lub operacji'], benefit: ['Requests stop bouncing between people or sitting unowned.', 'Zgłoszenia nie krążą między ludźmi i nie zostają bez ownera.'], complexity: 2, capabilities: ['tool-use', 'memory', 'human-approval'], archetype: 'enrich-and-route', industries: ['professional services', 'ecommerce', 'software'], trigger: ['A new message reaches the shared inbox.', 'Nowa wiadomość trafia do wspólnej skrzynki.'], subject: ['message, sender, customer history, topic, urgency, and team ownership rules', 'wiadomość, nadawcę, historię klienta, temat, pilność i zasady ownershipu'], decision: ['the right owner, priority, and suggested first action', 'właściwego ownera, priorytet i sugerowane pierwsze działanie'], output: ['Approved assignment and response deadline', 'Zatwierdzone przypisanie i termin odpowiedzi'], system: 'Shared inbox and CRM', sourceKeys: ['n8nCases', 'openclawOperations'] },
+  { slug: 'small-team-shared-inbox-routing', title: ['Small-team shared inbox routing', 'Każda wiadomość od klienta ma właściwego opiekuna'], oneLiner: ['Recognize the customer and request, find the right owner, and flag messages that need a fast response.', 'Rozpoznaje klienta i sprawę, wybiera właściwego opiekuna i oznacza wiadomości wymagające szybkiej reakcji.'], category: 'customer-support', contexts: ['small-business', 'team'], primaryUser: ['Small support or operations team', 'Mały zespół obsługi lub operacji'], benefit: ['Requests stop bouncing between people or sitting unowned.', 'Zgłoszenia nie krążą między ludźmi i nie zostają bez opiekuna.'], complexity: 2, capabilities: ['tool-use', 'memory', 'human-approval'], archetype: 'enrich-and-route', industries: ['professional services', 'ecommerce', 'software'], trigger: ['A new message reaches the shared inbox.', 'Nowa wiadomość trafia do wspólnej skrzynki.'], subject: ['message, sender, customer history, topic, urgency, and team ownership rules', 'wiadomość, nadawcę, historię klienta, temat, pilność i zasady przypisywania spraw'], decision: ['the right owner, priority, and suggested first action', 'właściwego opiekuna, priorytet i sugerowane pierwsze działanie'], output: ['Approved assignment and response deadline', 'Zatwierdzone przypisanie i termin odpowiedzi'], system: 'Shared inbox and CRM', sourceKeys: ['n8nCases', 'openclawOperations'] },
   { slug: 'shift-cover-coordinator', title: ['Shift cover coordinator', 'Zastępstwo znalezione bez grupowego chaosu'], oneLiner: ['Check skills, availability, overtime, and fairness before asking eligible coworkers.', 'Sprawdza umiejętności, dostępność, nadgodziny i równowagę zmian przed kontaktem z uprawnionymi osobami.'], category: 'people', contexts: ['small-business', 'team'], primaryUser: ['Shift manager', 'Osoba układająca grafik'], benefit: ['Open shifts are filled faster with fewer messages to the whole team.', 'Wolne zmiany są obsadzane szybciej i bez pisania do całego zespołu.'], complexity: 3, capabilities: ['tool-use', 'memory', 'multi-step-planning', 'human-approval'], archetype: 'orchestrate-multi-step', industries: ['hospitality', 'retail', 'healthcare'], trigger: ['An employee reports an absence or a shift becomes uncovered.', 'Pracownik zgłasza nieobecność albo zmiana zostaje bez obsady.'], subject: ['shift, required skills, availability, labor rules, overtime, and prior assignments', 'zmianę, wymagane umiejętności, dostępność, prawo pracy, nadgodziny i wcześniejsze przydziały'], decision: ['an eligible ranked cover list and contact order', 'ranking uprawnionych zastępstw i kolejność kontaktu'], output: ['Manager-approved cover request and updated roster', 'Prośba o zastępstwo zatwierdzona przez managera i zaktualizowany grafik'], system: 'Scheduling and messaging', sourceKeys: ['openclawOperations', 'n8nCases'] },
   { slug: 'food-safety-log-exception', title: ['Food safety log exception', 'Brak w dzienniku HACCP wykryty przed kontrolą'], oneLiner: ['Read temperature and cleaning logs, find missing or unsafe entries, and assign the corrective check.', 'Odczytuje dzienniki temperatur i czyszczenia, wykrywa braki lub ryzyko i przypisuje kontrolę naprawczą.'], category: 'legal-compliance', contexts: ['small-business', 'team'], primaryUser: ['Restaurant or food-production manager', 'Manager restauracji lub produkcji żywności'], benefit: ['Safety exceptions are addressed during the shift, not discovered days later.', 'Wyjątki bezpieczeństwa są obsługiwane podczas zmiany, a nie kilka dni później.'], complexity: 3, capabilities: ['vision', 'document-understanding', 'scheduled-monitoring', 'tool-use', 'human-approval'], archetype: 'monitor-and-alert', industries: ['hospitality', 'food production'], trigger: ['A required log is submitted, missed, or crosses a safety threshold.', 'Wymagany wpis zostaje dodany, pominięty lub przekracza próg bezpieczeństwa.'], subject: ['temperature logs, cleaning checks, shift, equipment, thresholds, and corrective policy', 'dzienniki temperatur, kontrole czyszczenia, zmianę, sprzęt, progi i politykę naprawczą'], decision: ['a cited exception and the required corrective check', 'udokumentowany wyjątek i wymaganą kontrolę naprawczą'], output: ['Manager-approved corrective task and evidence', 'Zadanie naprawcze zatwierdzone przez managera wraz z dowodem'], system: 'Forms and task manager', sourceKeys: ['n8nCases', 'openaiAgentsTools'] },
   { slug: 'property-maintenance-request-triage', title: ['Property maintenance request triage', 'Awaria najemcy od razu trafia do właściwego fachowca'], oneLiner: ['Read the message and photos, assess urgency, check responsibility, and prepare the right dispatch.', 'Czyta wiadomość i zdjęcia, ocenia pilność, sprawdza odpowiedzialność i przygotowuje właściwe zlecenie.'], category: 'operations', contexts: ['small-business', 'team'], primaryUser: ['Property manager', 'Zarządca nieruchomości'], benefit: ['Urgent repairs move faster and routine issues arrive with complete context.', 'Pilne naprawy ruszają szybciej, a zwykłe zgłoszenia mają pełny kontekst.'], complexity: 3, capabilities: ['vision', 'tool-use', 'memory', 'human-approval'], archetype: 'enrich-and-route', industries: ['property management', 'real estate'], trigger: ['A tenant submits a maintenance request.', 'Najemca wysyła zgłoszenie naprawy.'], subject: ['tenant message, photos, property, lease responsibility, vendor skills, and urgency rules', 'wiadomość najemcy, zdjęcia, lokal, odpowiedzialność z umowy, kompetencje wykonawców i zasady pilności'], decision: ['priority, responsible party, and qualified vendor route', 'priorytet, stronę odpowiedzialną i routing do właściwego wykonawcy'], output: ['Approved work order with complete evidence', 'Zatwierdzone zlecenie z kompletem dowodów'], system: 'Property manager and vendor directory', sourceKeys: ['openaiAgentsTools', 'n8nCases'] },
@@ -1750,20 +1746,100 @@ const polishOverrides: Record<string, { title: string; oneLiner: string }> = {
 
 const builtWorkflows = [...blueprints, ...additionalBlueprints, ...expansionBlueprints].map(buildWorkflow)
 
+const workflowCorrections: Record<string, Pick<AgentWorkflow, 'capabilities' | 'whyAgentic'>> = {
+  'event-attendee-concierge': {
+    capabilities: ['tool-use', 'multi-step-planning', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent understands a free-form request, checks it against current event and entitlement data, then chooses an allowed action or escalation.',
+      pl: 'Agent rozumie swobodnie opisaną prośbę, sprawdza ją w aktualnych danych wydarzenia i uprawnieniach, a następnie wybiera dozwolone działanie lub eskalację.',
+    },
+  },
+  'multi-brand-voice-support': {
+    capabilities: ['tool-use', 'memory', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent recognizes the customer intent and brand context, applies the right policy, then resolves the case or hands it to a person.',
+      pl: 'Agent rozpoznaje zamiar klienta i kontekst marki, stosuje właściwe zasady, a następnie rozwiązuje sprawę lub przekazuje ją człowiekowi.',
+    },
+  },
+  'travel-cancellation-and-rebooking': {
+    capabilities: ['browser-actions', 'multi-step-planning', 'tool-use', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent compares changing availability, fare rules, timing, and traveler preferences, then carries out only the option a person approves.',
+      pl: 'Agent porównuje zmieniającą się dostępność, zasady taryfy, terminy i preferencje podróżnego, a następnie wykonuje wyłącznie zaakceptowaną opcję.',
+    },
+  },
+  'legacy-access-provisioning': {
+    capabilities: ['document-understanding', 'tool-use', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent combines identity, approval, segregation-of-duties, and least-privilege rules before preparing a bounded access change.',
+      pl: 'Agent łączy dane o tożsamości, zgodzie, konflikcie obowiązków i minimalnych uprawnieniach przed przygotowaniem ograniczonej zmiany dostępu.',
+    },
+  },
+  'field-service-dispatch-recovery': {
+    capabilities: ['tool-use', 'multi-step-planning', 'memory', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent replans a changing schedule across technician skills, parts, travel time, service levels, and customer windows.',
+      pl: 'Agent układa zmieniony grafik na nowo, uwzględniając umiejętności techników, części, dojazdy, poziom obsługi i okna klientów.',
+    },
+  },
+  'transcript-to-content-campaign': {
+    capabilities: ['document-understanding', 'multi-step-planning', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent identifies supported claims in an approved transcript, adapts them to each channel, and keeps every draft traceable to the source.',
+      pl: 'Agent wybiera potwierdzone tezy z gotowego transkryptu, dopasowuje je do kanałów i zachowuje powiązanie każdej treści ze źródłem.',
+    },
+  },
+  'sales-transcript-to-crm-hygiene': {
+    capabilities: ['document-understanding', 'tool-use', 'memory', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent interprets decisions, objections, dates, and commitments in a ready transcript, then proposes precise CRM changes for approval.',
+      pl: 'Agent odczytuje decyzje, obiekcje, daty i zobowiązania z gotowego transkryptu, a następnie proponuje konkretne zmiany w CRM do akceptacji.',
+    },
+  },
+  'brand-compliance-review': {
+    capabilities: ['document-understanding', 'vision', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent compares copy and visual assets with approved claims, tone, and brand rules, then points to the exact elements that need review.',
+      pl: 'Agent porównuje treść i materiały wizualne z zatwierdzonymi obietnicami, tonem i zasadami marki, a potem wskazuje elementy wymagające sprawdzenia.',
+    },
+  },
+  'variance-reporting-with-evidence': {
+    capabilities: ['document-understanding', 'tool-use', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent connects financial and operational evidence, weighs competing explanations, and produces a cited variance narrative for review.',
+      pl: 'Agent łączy dowody finansowe i operacyjne, porównuje możliwe wyjaśnienia i przygotowuje opis odchyleń ze źródłami do przeglądu.',
+    },
+  },
+  'litigation-evidence-chronology': {
+    capabilities: ['document-understanding', 'memory', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent links events across inconsistent case materials, preserves provenance, and flags contradictions without making legal conclusions.',
+      pl: 'Agent łączy zdarzenia z niespójnych materiałów sprawy, zachowuje pochodzenie dowodów i wskazuje sprzeczności bez wyciągania wniosków prawnych.',
+    },
+  },
+  'payment-exception-resolution': {
+    capabilities: ['document-understanding', 'tool-use', 'multi-step-planning', 'human-approval'],
+    whyAgentic: {
+      en: 'The agent combines payment state, policy, prior attempts, and exception evidence to choose a permitted recovery path for approval.',
+      pl: 'Agent łączy stan płatności, zasady, wcześniejsze próby i dowody wyjątku, żeby zaproponować dozwoloną ścieżkę rozwiązania do akceptacji.',
+    },
+  },
+}
+
 export const agentWorkflows: AgentWorkflow[] = builtWorkflows.map((workflow) => {
   const override = polishOverrides[workflow.slug]
-  if (!override) {
-    return workflow
-  }
+  const correction = workflowCorrections[workflow.slug]
+  const localized = override
+    ? {
+        ...workflow,
+        title: { ...workflow.title, pl: override.title },
+        oneLiner: { ...workflow.oneLiner, pl: override.oneLiner },
+        summary: {
+          ...workflow.summary,
+          pl: `${override.oneLiner} ${workflow.summary.pl.slice(workflow.oneLiner.pl.length).trim()}`,
+        },
+      }
+    : workflow
 
-  return {
-    ...workflow,
-    title: { ...workflow.title, pl: override.title },
-    oneLiner: { ...workflow.oneLiner, pl: override.oneLiner },
-    benefit: { ...workflow.benefit, pl: override.oneLiner },
-    summary: {
-      ...workflow.summary,
-      pl: `${override.oneLiner} ${workflow.summary.pl.slice(workflow.oneLiner.pl.length).trim()}`,
-    },
-  }
+  return correction ? { ...localized, ...correction } : localized
 })
