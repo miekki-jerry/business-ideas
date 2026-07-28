@@ -4,10 +4,12 @@ import { createAgentWorkflowsRepository } from '../src/features/agent-workflows/
 import { app } from '../src/index'
 
 describe('agent workflows dataset', () => {
-  it('contains 48 unique, published workflows', () => {
-    expect(agentWorkflows).toHaveLength(48)
-    expect(new Set(agentWorkflows.map(({ id }) => id))).toHaveLength(48)
-    expect(new Set(agentWorkflows.map(({ slug }) => slug))).toHaveLength(48)
+  it('contains 100 unique, published workflows', () => {
+    expect(agentWorkflows).toHaveLength(100)
+    expect(new Set(agentWorkflows.map(({ id }) => id))).toHaveLength(100)
+    expect(new Set(agentWorkflows.map(({ slug }) => slug))).toHaveLength(100)
+    expect(new Set(agentWorkflows.map(({ title }) => title.en))).toHaveLength(100)
+    expect(new Set(agentWorkflows.map(({ title }) => title.pl))).toHaveLength(100)
     expect(agentWorkflows.every(({ published }) => published)).toBe(true)
   })
 
@@ -17,7 +19,15 @@ describe('agent workflows dataset', () => {
       expectLocalized(workflow.oneLiner)
       expectLocalized(workflow.summary)
       expectLocalized(workflow.department)
+      expectLocalized(workflow.primaryUser)
+      expectLocalized(workflow.benefit)
+      expectLocalized(workflow.beforeAgentic)
+      expectLocalized(workflow.whyAgentic)
       expectLocalized(workflow.trigger)
+      expect(workflow.contexts.length).toBeGreaterThan(0)
+      expect(workflow.capabilities.length).toBeGreaterThan(0)
+      expect(workflow.complexity).toBeGreaterThanOrEqual(1)
+      expect(workflow.complexity).toBeLessThanOrEqual(5)
       expect(workflow.inputs.length).toBeGreaterThanOrEqual(2)
       expect(workflow.agentSteps.length).toBeGreaterThanOrEqual(4)
       expect(workflow.humanCheckpoints.length).toBeGreaterThan(0)
@@ -38,6 +48,8 @@ describe('agent workflows dataset', () => {
         expectLocalized(text)
       }
     }
+
+    expect(new Set(agentWorkflows.map(({ complexity }) => complexity))).toEqual(new Set([1, 2, 3, 4, 5]))
   })
 
   it('uses bounded impact ranges and real HTTP sources', () => {
@@ -64,7 +76,7 @@ describe('agent workflows API', () => {
     const response = await app.request('/api/agent-workflows')
     expect(response.status).toBe(200)
     const json = (await response.json()) as { workflows: Array<{ slug: string }> }
-    expect(json.workflows).toHaveLength(48)
+    expect(json.workflows).toHaveLength(100)
     expect(json.workflows.map(({ slug }) => slug)).toContain(agentWorkflows[0]!.slug)
   })
 
