@@ -436,7 +436,7 @@ function buildWorkflow(blueprint: Blueprint): AgentWorkflow {
     ],
     'monitor-and-alert': [
       'It evaluates fresh signals against a defined baseline, suppresses weak alerts, and creates an owned task only when the evidence crosses an approved threshold.',
-      'Porównuje świeże sygnały ze zdefiniowanym baseline, wycisza słabe alerty i tworzy przypisane zadanie dopiero po przekroczeniu zatwierdzonego progu.',
+      'Porównuje świeże sygnały z ustalonym punktem odniesienia, wycisza słabe alerty i tworzy przypisane zadanie dopiero po przekroczeniu zatwierdzonego progu.',
     ],
     'orchestrate-multi-step': [
       'It coordinates dependencies across connected systems, pauses at exception boundaries, and records the state of every approved sub-step.',
@@ -632,13 +632,13 @@ const compactPatterns = {
       ['Resolve the case identity and validate source freshness.', 'Rozpoznaje sprawę i sprawdza aktualność źródeł.'],
       ['Enrich the case with approved context and show every scoring signal.', 'Wzbogaca sprawę zatwierdzonym kontekstem i pokazuje każdy sygnał oceny.'],
       ['Prepare {{decision}} with confidence and exceptions.', 'Przygotowuje {{decision}} wraz z poziomem pewności i wyjątkami.'],
-      ['Create the approved assignment and notify its owner.', 'Tworzy zatwierdzone przypisanie i powiadamia jego ownera.'],
+      ['Create the approved assignment and notify its owner.', 'Tworzy zatwierdzone przypisanie i powiadamia odpowiedzialną osobę.'],
     ],
-    risk: ['A wrong identity match can send a case to the wrong owner.', 'Błędne rozpoznanie może skierować sprawę do niewłaściwego ownera.'],
+    risk: ['A wrong identity match can send a case to the wrong owner.', 'Błędne rozpoznanie może skierować sprawę do niewłaściwej osoby.'],
     mitigation: ['Require deterministic identifiers and expose the routing rationale.', 'Wymagaj deterministycznych identyfikatorów i pokazuj uzasadnienie routingu.'],
     guardrails: [
       ['Do not route low-confidence identity matches automatically.', 'Nie kieruj automatycznie dopasowań tożsamości o niskiej pewności.'],
-      ['Use an allowlist of destinations and writable fields.', 'Stosuj allowlistę miejsc docelowych i zapisywalnych pól.'],
+      ['Use an allowlist of destinations and writable fields.', 'Stosuj zamkniętą listę miejsc docelowych i pól, które wolno zmieniać.'],
     ],
   },
   'draft-and-approve': {
@@ -652,7 +652,7 @@ const compactPatterns = {
     mitigation: ['Attach evidence to material claims and block approval when citations are missing.', 'Dołączaj dowody do istotnych tez i blokuj akceptację przy braku cytowań.'],
     guardrails: [
       ['Never publish, send, or post without the named approval.', 'Nigdy nie publikuj, nie wysyłaj ani nie zapisuj bez wskazanej akceptacji.'],
-      ['Keep templates, policies, and source timestamps visible to the reviewer.', 'Pokazuj reviewerowi szablony, polityki i czas aktualizacji źródeł.'],
+      ['Keep templates, policies, and source timestamps visible to the reviewer.', 'Pokazuj osobie sprawdzającej szablony, zasady i czas aktualizacji źródeł.'],
     ],
   },
   'investigate-and-report': {
@@ -663,7 +663,7 @@ const compactPatterns = {
       ['Deliver the approved report and preserve its evidence set.', 'Dostarcza zatwierdzony raport i zachowuje jego zestaw dowodów.'],
     ],
     risk: ['Missing or stale evidence can produce a confident but incomplete finding.', 'Brakujące lub nieaktualne dowody mogą dać pewne, ale niepełne ustalenie.'],
-    mitigation: ['Show source coverage, conflicts, timestamps, and unanswered questions.', 'Pokazuj pokrycie źródeł, konflikty, timestampy i pytania bez odpowiedzi.'],
+    mitigation: ['Show source coverage, conflicts, timestamps, and unanswered questions.', 'Pokazuj wykorzystane źródła, sprzeczności, daty danych i pytania bez odpowiedzi.'],
     guardrails: [
       ['Label inference separately from observed facts.', 'Oznaczaj wnioski oddzielnie od obserwowanych faktów.'],
       ['Do not close the investigation while required sources are unavailable.', 'Nie zamykaj dochodzenia, gdy wymagane źródła są niedostępne.'],
@@ -671,13 +671,13 @@ const compactPatterns = {
   },
   'reconcile-and-flag': {
     steps: [
-      ['Normalize records and validate period, currency, and ownership.', 'Normalizuje rekordy i sprawdza okres, walutę oraz ownership.'],
+      ['Normalize records and validate period, currency, and ownership.', 'Normalizuje rekordy i sprawdza okres, walutę oraz odpowiedzialność.'],
       ['Apply deterministic matching rules before model-assisted classification.', 'Stosuje deterministyczne reguły dopasowania przed klasyfikacją wspieraną modelem.'],
-      ['Prepare a result covering {{decision}} and isolate every unresolved difference.', 'Przygotowuje wynik obejmujący {{decision}}; każdą niewyjaśnioną różnicę kieruje do review.'],
+      ['Prepare a result covering {{decision}} and isolate every unresolved difference.', 'Przygotowuje wynik obejmujący {{decision}}; każdą niewyjaśnioną różnicę kieruje do sprawdzenia.'],
       ['Post only approved matches and retain the reconciliation evidence.', 'Zapisuje wyłącznie zatwierdzone dopasowania i zachowuje dowody uzgodnienia.'],
     ],
     risk: ['A plausible but incorrect match can hide a material difference.', 'Wiarygodne, lecz błędne dopasowanie może ukryć istotną różnicę.'],
-    mitigation: ['Keep deterministic rules outside the model and require review above materiality thresholds.', 'Trzymaj reguły deterministyczne poza modelem i wymagaj review powyżej progów istotności.'],
+    mitigation: ['Keep deterministic rules outside the model and require review above materiality thresholds.', 'Trzymaj jednoznaczne reguły poza modelem i wymagaj kontroli powyżej progów istotności.'],
     guardrails: [
       ['Never auto-clear unresolved or material differences.', 'Nigdy nie zamykaj automatycznie niewyjaśnionych lub istotnych różnic.'],
       ['Preserve source rows and match rationale in the audit trail.', 'Zachowuj rekordy źródłowe i uzasadnienie dopasowania w śladzie audytowym.'],
@@ -686,22 +686,22 @@ const compactPatterns = {
   'monitor-and-alert': {
     steps: [
       ['Refresh the monitored signals and reject stale observations.', 'Odświeża monitorowane sygnały i odrzuca nieaktualne obserwacje.'],
-      ['Compare the current state with the approved baseline and suppression rules.', 'Porównuje bieżący stan z zatwierdzonym baseline i regułami wyciszania.'],
+      ['Compare the current state with the approved baseline and suppression rules.', 'Porównuje bieżący stan z zatwierdzonym punktem odniesienia i regułami wyciszania.'],
       ['Prepare {{decision}} with the threshold breach and supporting evidence.', 'Przygotowuje {{decision}} z przekroczonym progiem i dowodami.'],
-      ['Create the approved alert or owned follow-up task.', 'Tworzy zatwierdzony alert lub przypisane zadanie follow-up.'],
+      ['Create the approved alert or owned follow-up task.', 'Tworzy zatwierdzony alert lub przypisane zadanie do wykonania.'],
     ],
-    risk: ['Noisy or stale signals can create alert fatigue and poor decisions.', 'Szum lub nieaktualne sygnały mogą powodować alert fatigue i złe decyzje.'],
-    mitigation: ['Calibrate thresholds by segment and track precision before enabling actions.', 'Kalibruj progi per segment i mierz precision przed uruchomieniem akcji.'],
+    risk: ['Noisy or stale signals can create alert fatigue and poor decisions.', 'Szum lub nieaktualne sygnały mogą powodować zmęczenie alertami i złe decyzje.'],
+    mitigation: ['Calibrate thresholds by segment and track precision before enabling actions.', 'Kalibruj progi dla każdej grupy i mierz trafność przed uruchomieniem działań.'],
     guardrails: [
       ['Suppress alerts without fresh supporting evidence.', 'Wyciszaj alerty bez świeżych dowodów.'],
-      ['Do not turn a risk score into an irreversible action.', 'Nie zamieniaj risk score w nieodwracalną akcję.'],
+      ['Do not turn a risk score into an irreversible action.', 'Nie zamieniaj samej oceny ryzyka w nieodwracalne działanie.'],
     ],
   },
   'orchestrate-multi-step': {
     steps: [
       ['Build the dependency graph and verify every connector permission.', 'Buduje graf zależności i sprawdza uprawnienia każdego konektora.'],
-      ['Coordinate read-only sub-steps and surface blocked dependencies.', 'Koordynuje podkroki read-only i pokazuje zablokowane zależności.'],
-      ['Prepare {{decision}} with state, exceptions, and rollback points.', 'Przygotowuje {{decision}} ze stanem, wyjątkami i punktami rollbacku.'],
+      ['Coordinate read-only sub-steps and surface blocked dependencies.', 'Koordynuje kroki bez prawa zapisu i pokazuje zablokowane zależności.'],
+      ['Prepare {{decision}} with state, exceptions, and rollback points.', 'Przygotowuje {{decision}} ze stanem, wyjątkami i punktami bezpiecznego wycofania.'],
       ['Execute approved sub-steps idempotently and verify the final state.', 'Wykonuje zatwierdzone podkroki idempotentnie i weryfikuje stan końcowy.'],
     ],
     risk: ['A partial multi-system execution can leave records in conflicting states.', 'Częściowe wykonanie w wielu systemach może pozostawić rekordy w sprzecznych stanach.'],
@@ -715,13 +715,13 @@ const compactPatterns = {
     steps: [
       ['Verify identity, entitlement, and the current policy version.', 'Weryfikuje tożsamość, uprawnienia i bieżącą wersję polityki.'],
       ['Simulate the requested action and calculate its bounded effects.', 'Symuluje żądaną akcję i oblicza jej ograniczone skutki.'],
-      ['Prepare {{decision}} with side effects and rollback conditions.', 'Przygotowuje {{decision}} ze skutkami ubocznymi i warunkami rollbacku.'],
+      ['Prepare {{decision}} with side effects and rollback conditions.', 'Przygotowuje {{decision}} ze skutkami ubocznymi i warunkami wycofania.'],
       ['Execute the approved action, verify the result, and log the change.', 'Wykonuje zatwierdzoną akcję, weryfikuje wynik i zapisuje zmianę.'],
     ],
     risk: ['An incorrect or over-scoped action can change a material record.', 'Błędna lub zbyt szeroka akcja może zmienić istotny rekord.'],
-    mitigation: ['Use least-privilege tools, dry runs, hard limits, and post-action verification.', 'Stosuj narzędzia least-privilege, dry runy, twarde limity i weryfikację po akcji.'],
+    mitigation: ['Use least-privilege tools, dry runs, hard limits, and post-action verification.', 'Stosuj minimalne uprawnienia, próbne wykonanie, twarde limity i kontrolę po działaniu.'],
     guardrails: [
-      ['Block execution when identity, evidence, or rollback conditions are incomplete.', 'Blokuj wykonanie przy niepełnej tożsamości, dowodach lub warunkach rollbacku.'],
+      ['Block execution when identity, evidence, or rollback conditions are incomplete.', 'Blokuj wykonanie przy niepełnej tożsamości, dowodach lub warunkach wycofania.'],
       ['Require fresh approval for irreversible or high-value actions.', 'Wymagaj świeżej akceptacji dla akcji nieodwracalnych lub wysokiej wartości.'],
     ],
   },
@@ -763,14 +763,14 @@ function compact(specs: CompactSpec[]): Blueprint[] {
     trigger: spec.trigger,
     inputs: [
       [`Process context: ${spec.subject[0]}`, `Kontekst procesu: ${spec.subject[1]}`],
-      [`Approved policies, ownership, and exception rules`, `Zatwierdzone polityki, ownership i reguły wyjątków`],
+      [`Approved policies, ownership, and exception rules`, `Zatwierdzone zasady, odpowiedzialność i reguły wyjątków`],
     ],
     steps,
-    checkpoint: [`The accountable process owner approves ${spec.decision[0]}.`, `Odpowiedzialny owner procesu zatwierdza ${spec.decision[1]}.`],
+    checkpoint: [`The accountable process owner approves ${spec.decision[0]}.`, `Osoba odpowiedzialna za proces zatwierdza ${spec.decision[1]}.`],
     outputs: [spec.output, ['Evidence, exceptions, and audit trail', 'Dowody, wyjątki i ślad audytowy']],
     minimumStack: spec.category === 'legal-compliance' || spec.category === 'insurance' ? commonStack.documents : commonStack.operations,
     tools: [
-      [spec.system, [`Provides the system of record and bounded write actions.`, `Dostarcza system of record i ograniczone akcje zapisu.`]],
+      [spec.system, [`Provides the system of record and bounded write actions.`, `Dostarcza główne dane procesu i ograniczone możliwości zapisu.`]],
       ['Review queue', [`Captures approval, rejection, and rationale.`, `Rejestruje akceptację, odrzucenie i uzasadnienie.`]],
     ],
     risk: pattern.risk,
@@ -784,7 +784,7 @@ function compact(specs: CompactSpec[]): Blueprint[] {
       spec.impact[4],
       spec.impactExplanation ?? [
         'A bounded planning range for the named operational KPI; validate it against a pre-deployment baseline.',
-        'Ograniczony zakres planistyczny dla wskazanego KPI operacyjnego; zweryfikuj go względem baseline sprzed wdrożenia.',
+        'Ostrożny zakres planistyczny dla wskazanego miernika; zweryfikuj go względem wyniku sprzed wdrożenia.',
       ],
     ],
     sourceKeys: spec.sourceKeys,
