@@ -18,6 +18,8 @@ We started from concrete enterprise and practitioner examples, then normalized t
 
 Business function is the primary category. Industry and company size are filters, not substitutes for the workflow category. Similar examples were merged when they had the same trigger, decision, human gate, and output.
 
+The catalog has no target record count. A workflow stays unpublished when it is mainly a reminder, a generic writing or search feature, a deterministic rule better handled by ordinary automation, a risky judgment without sufficient evidence, or a weaker duplicate of a more complete workflow.
+
 ## Rejection criteria
 
 We rejected generic “summarize”, “draft”, and “analyze” ideas without a trigger, system boundary, approval gate, and KPI. We also rejected autonomous high-stakes decisions, untraceable claims, product demos without a repeatable operating process, duplicates distinguished only by tool brand, and impact claims that could not be expressed as a bounded range.

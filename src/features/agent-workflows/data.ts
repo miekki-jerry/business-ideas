@@ -1746,6 +1746,45 @@ const polishOverrides: Record<string, { title: string; oneLiner: string }> = {
 
 const builtWorkflows = [...blueprints, ...additionalBlueprints, ...expansionBlueprints].map(buildWorkflow)
 
+const unpublishedWorkflowSlugs = new Set([
+  'multi-brand-voice-support',
+  'specialist-support-swarm',
+  'accessibility-seo-remediation',
+  'order-price-discrepancy-resolution',
+  'close-exception-monitor',
+  'investor-relations-preparation',
+  'candidate-screening-and-scheduling',
+  'frontline-hiring-orchestration',
+  'promotion-change-workflow',
+  'insurance-claim-orchestration',
+  'legacy-access-provisioning',
+  'renewal-risk-and-next-best-action',
+  'household-bill-due-monitor',
+  'subscription-renewal-watch',
+  'personal-document-expiry-watch',
+  'family-calendar-conflict-resolver',
+  'home-maintenance-planner',
+  'personal-spending-anomaly-digest',
+  'job-application-progress-tracker',
+  'health-visit-preparation-pack',
+  'photo-document-archive',
+  'trip-price-drop-monitor',
+  'loyalty-points-expiry-watch',
+  'freelance-overdue-invoice-followup',
+  'creator-sponsor-deliverable-tracker',
+  'video-footage-clip-finder',
+  'master-content-platform-pack',
+  'freelance-capacity-risk-watch',
+  'portfolio-case-study-builder',
+  'customer-review-response',
+  'small-business-quote-followup',
+  'small-business-stock-reorder-watch',
+  'small-team-shared-inbox-routing',
+  'food-safety-log-exception',
+  'business-license-renewal-watch',
+  'release-readiness-gate',
+])
+
 const workflowCorrections: Record<string, Pick<AgentWorkflow, 'capabilities' | 'whyAgentic'>> = {
   'event-attendee-concierge': {
     capabilities: ['tool-use', 'multi-step-planning', 'human-approval'],
@@ -1826,20 +1865,22 @@ const workflowCorrections: Record<string, Pick<AgentWorkflow, 'capabilities' | '
   },
 }
 
-export const agentWorkflows: AgentWorkflow[] = builtWorkflows.map((workflow) => {
-  const override = polishOverrides[workflow.slug]
-  const correction = workflowCorrections[workflow.slug]
-  const localized = override
-    ? {
-        ...workflow,
-        title: { ...workflow.title, pl: override.title },
-        oneLiner: { ...workflow.oneLiner, pl: override.oneLiner },
-        summary: {
-          ...workflow.summary,
-          pl: `${override.oneLiner} ${workflow.summary.pl.slice(workflow.oneLiner.pl.length).trim()}`,
-        },
-      }
-    : workflow
+export const agentWorkflows: AgentWorkflow[] = builtWorkflows
+  .filter(({ slug }) => !unpublishedWorkflowSlugs.has(slug))
+  .map((workflow) => {
+    const override = polishOverrides[workflow.slug]
+    const correction = workflowCorrections[workflow.slug]
+    const localized = override
+      ? {
+          ...workflow,
+          title: { ...workflow.title, pl: override.title },
+          oneLiner: { ...workflow.oneLiner, pl: override.oneLiner },
+          summary: {
+            ...workflow.summary,
+            pl: `${override.oneLiner} ${workflow.summary.pl.slice(workflow.oneLiner.pl.length).trim()}`,
+          },
+        }
+      : workflow
 
-  return correction ? { ...localized, ...correction } : localized
-})
+    return correction ? { ...localized, ...correction } : localized
+  })
