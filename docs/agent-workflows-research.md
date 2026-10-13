@@ -66,3 +66,30 @@ Practical implementation signals:
 - Riley Brown: <https://x.com/rileybrown_ai/status/1941524123525533750>
 
 Social posts are supporting implementation examples only. They do not justify measured impact claims.
+
+## Matthew Berman video review — 2026-10-13
+
+Source: [12 Grok Bot Use Cases That Feel Illegal](https://www.youtube.com/watch?v=BsNHg6cNjZE), Matthew Berman, published 2026-10-07, duration 25:39. The review used YouTube's English automatic captions, retrieved with yt-dlp; this is not a manually verified transcription. Full captions and the working timestamped transcript stay in ignored `.private/transcripts/BsNHg6cNjZE/`.
+
+Eight additions were accepted. Each links to its relevant chapter, has Polish and English operational content, and uses `emerging` maturity. The integrations describe an implementation proposal, not an independently tested Grok Bot capability. Approval gates are deliberately stricter than some spoken demonstrations and follow the video's displayed prompts where they differ.
+
+| Chapter | Catalog slug | Editorial decision |
+| --- | --- | --- |
+| 00:38 | `subscription-discount-negotiation` | Subscription evidence and vendor-specific discount requests; cancellation and new terms need approval. |
+| 04:05 | `disk-cleanup-review` | Contextual review of caches, exports, and originals; exact paths require approval before moving to Trash. |
+| 07:11 | `personal-daily-action-brief` | Cross-source meeting context and urgent commitments; read-only and private. |
+| 08:21 | `school-email-to-family-logistics` | Extract changing school commitments, match calendar events, and prepare event-specific duties. |
+| 11:28 | `creator-sponsorship-dm-triage` | Triage inbound creator DMs, verify identity, and draft replies; distinct from researching brand fit. |
+| 13:42–18:09 | `meeting-commitments-to-personal-tasks` | Merge meeting-summary and to-do-manager patterns into one commitment-to-task reconciliation workflow; distinct from CRM updates. |
+| 20:40 | `utility-rate-plan-comparison` | Retrieve usage and eligible official plans; deterministic calculations and an explicit switch decision. PG&E is the author's example, not a Polish provider recommendation. |
+| 22:09 | `calendar-aware-appointment-booking` | Coordinate provider slots with several calendars and verify a user-approved booking; distinct from detecting calendar clashes. |
+
+Remaining examples were reviewed rather than added indiscriminately:
+
+- Email triage (18:10): covered by `personal-inbox-action-triage`; no duplicate.
+- Tesla preparation (02:36): the demonstrated preset commands do not establish a distinct reasoning-heavy workflow; physical access and movement are outside these additions.
+- Unclaimed-property search (01:44): jurisdiction-specific discovery and claim submission need stronger eligibility evidence; no generic legal or financial claim workflow added.
+- Uber and DoorDash (23:57): basic repeat booking or reorder requests are too close to ordinary tool automation. The suggested cross-agent orchestration lacks a sufficiently detailed independent process here.
+- Sponsor advertisements and community promotion: excluded.
+
+The video reports personal cost and time savings. These were not independently verified and are not catalog outcome metrics. New impact ranges are explicitly low-confidence editorial planning ranges of 0–30% for a named manual preparation task, allowing no improvement. They are not forecasts of subscription savings, utility savings, or ROI. A pilot must measure baseline effort, corrections, and exceptions before replacing the range with observed outcomes.
